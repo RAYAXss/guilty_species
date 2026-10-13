@@ -120,7 +120,10 @@ function buildStatements(rng: Rng, params: DifficultyParams, characters: Charact
       // Truthful speakers: every statement true. Liars: the first one must be false.
       const mustBe: boolean | null = tellsTruth ? true : i === 0 ? false : null;
       const composites: LogicalPredicate[] = [];
-      const [a, b] = shuffle(rng, atoms);
+      // Composite clues must combine two different subjects ("Elara ment ou Elara dit vrai" is a useless tautology).
+      const shuffled = shuffle(rng, atoms);
+      const a = shuffled[0];
+      const b = a && shuffled.find((x) => subjectOf(x) !== subjectOf(a));
       if (a && b) {
         composites.push({ type: "or", operands: [a, b] }, { type: "and", operands: [a, b] }, { type: "not", operand: a });
       }
@@ -140,4 +143,20 @@ function buildStatements(rng: Rng, params: DifficultyParams, characters: Charact
     }
   }
   return statements;
+}
+
+/** What a predicate talks about, used to avoid composites over a single subject. */
+function subjectOf(p: LogicalPredicate): string {
+  switch (p.type) {
+    case "characterTruth":
+      return `truth:${p.characterId}`;
+    case "culpritIs":
+      return `culprit:${p.characterId}`;
+    case "culpritAlignment":
+      return `alignment:${p.alignment}`;
+    case "culpritSpecies":
+      return `species:${p.species}`;
+    default:
+      return p.type;
+  }
 }

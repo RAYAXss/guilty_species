@@ -49,6 +49,19 @@ describe("generatePuzzle", () => {
     }
   });
 
+  it("never produces a composite clue over a single subject (tautology)", () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const { puzzle } = generatePuzzle({ difficulty: "expert", seed });
+      for (const s of puzzle.statements) {
+        const p = s.predicate;
+        if (p.type === "or" || p.type === "and") {
+          const [x, y] = p.operands as [typeof p, typeof p];
+          expect(JSON.stringify({ ...x, expected: 0 })).not.toBe(JSON.stringify({ ...y, expected: 0 }));
+        }
+      }
+    }
+  });
+
   it("throws when no unique puzzle can be generated", () => {
     expect(() => generatePuzzle({ difficulty: "facile", seed: 1, maxAttempts: 0 })).toThrow(PuzzleGenerationError);
   });
