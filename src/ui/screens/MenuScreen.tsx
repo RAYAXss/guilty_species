@@ -1,0 +1,120 @@
+import { motion } from "motion/react";
+import { Check, Frown, PartyPopper, Play, Star } from "lucide-react";
+import { CHARACTER_CATALOG } from "../../domain/characters/catalog";
+import { DIFFICULTY_ORDER, MAX_CHARACTERS, MIN_CHARACTERS, type GameState } from "../../application/game/session";
+import { CharacterCard } from "../components/CharacterCard";
+import { motionTokens } from "../tokens/motion";
+
+interface Props {
+  state: GameState;
+  onSetCount: (n: number) => void;
+  onStart: () => void;
+}
+
+const HERO = [
+  { id: "elara", say: "Varek ment, j'en suis sûre.", tilt: -6 },
+  { id: "gorak", say: "Le coupable n'est pas un pacifiste.", tilt: 0 },
+  { id: "varek", say: "Gorak dit la vérité.", tilt: 6 },
+].map((h) => ({ ...h, character: CHARACTER_CATALOG.find((c) => c.id === h.id)! }));
+
+const counts = Array.from({ length: MAX_CHARACTERS - MIN_CHARACTERS + 1 }, (_, i) => MIN_CHARACTERS + i);
+
+export function MenuScreen({ state, onSetCount, onStart }: Props) {
+  const { difficulty, characterCount, lastResult } = state;
+  const level = DIFFICULTY_ORDER.indexOf(difficulty);
+
+  return (
+    <motion.main
+      className="mx-auto flex min-h-screen max-w-5xl flex-col items-center gap-8 px-4 pb-10 pt-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: motionTokens.duration.normal }}
+    >
+      <header className="text-center">
+        <h1 className="font-display text-5xl font-extrabold leading-[0.95] sm:text-7xl">Fantasy Deduction</h1>
+        <p className="mx-auto mt-3 max-w-md text-lg font-semibold text-muted">
+          Chaque créature affirme quelque chose. Les règles disent qui dit vrai. Un seul suspect tient jusqu'au bout.
+        </p>
+      </header>
+
+      <div aria-hidden className="grid w-full max-w-2xl grid-cols-3 gap-3 pt-10 sm:gap-6">
+        {HERO.map((h, i) => (
+          <div key={h.id} style={{ rotate: `${h.tilt}deg`, marginTop: h.tilt === 0 ? 0 : 14 }}>
+            <ul>
+              <CharacterCard character={h.character} statement={h.say} index={i} preview />
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {lastResult && (
+        <motion.p
+          role="status"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={motionTokens.spring.lively}
+          className={`flex items-center gap-2 rounded-2xl border-[3px] px-4 py-2 text-lg font-bold ${
+            lastResult === "won" ? "border-success bg-pacifiste-soft text-success" : "border-danger bg-belliqueux-soft text-danger"
+          }`}
+        >
+          {lastResult === "won" ? <PartyPopper size={22} aria-hidden /> : <Frown size={22} aria-hidden />}
+          {lastResult === "won"
+            ? `Coupable démasqué ! Niveau suivant : ${difficulty}.`
+            : `Manche perdue. Tu retentes au niveau ${difficulty}.`}
+        </motion.p>
+      )}
+
+      <section className="w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-5 shadow-[0_6px_0_#1d1a4a]">
+        <h2 className="font-display text-xl font-extrabold">Niveau</h2>
+        <ol className="mt-2 grid grid-cols-4 gap-2">
+          {DIFFICULTY_ORDER.map((d, i) => {
+            const current = i === level;
+            const done = i < level;
+            return (
+              <li
+                key={d}
+                aria-current={current ? "step" : undefined}
+                className={`flex flex-col items-center gap-1 rounded-2xl border-[3px] px-1 py-2 text-center text-sm font-bold sm:text-base ${
+                  current ? "border-ink bg-sun" : done ? "border-success/40 bg-pacifiste-soft" : "border-ink/10 text-muted"
+                }`}
+              >
+                <span className="flex" aria-hidden>
+                  {done ? <Check size={18} strokeWidth={3} className="text-success" /> : Array.from({ length: i + 1 }, (_, k) => <Star key={k} size={14} className={current ? "fill-ink" : ""} />)}
+                </span>
+                {d}
+              </li>
+            );
+          })}
+        </ol>
+
+        <h2 id="count-label" className="mt-5 font-display text-xl font-extrabold">
+          Créatures dans la manche
+        </h2>
+        <div role="radiogroup" aria-labelledby="count-label" className="mt-2 flex flex-wrap gap-2">
+          {counts.map((n) => (
+            <button
+              key={n}
+              role="radio"
+              aria-checked={n === characterCount}
+              onClick={() => onSetCount(n)}
+              className={`size-12 rounded-2xl border-[3px] font-display text-xl font-bold transition ${
+                n === characterCount ? "border-ink bg-primary text-white shadow-[0_4px_0_#1d1a4a]" : "border-ink/20 bg-white hover:border-ink"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={onStart}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-6 py-4 font-display text-2xl font-bold text-white shadow-[0_6px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_2px_0_#1d1a4a]"
+        >
+          <Play size={24} className="fill-white" aria-hidden />
+          Lancer la manche
+        </button>
+      </section>
+    </motion.main>
+  );
+}
