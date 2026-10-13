@@ -12,6 +12,8 @@ import { DIFFICULTY_PARAMS, type DifficultyParams } from "./difficulty";
 export interface GenerateOptions {
   difficulty: Difficulty;
   seed: number;
+  /** Overrides the difficulty's default number of characters. */
+  characterCount?: number;
   /** Injectable catalog (defaults to the built-in one). */
   catalog?: readonly Character[];
   maxAttempts?: number;
@@ -28,14 +30,17 @@ export class PuzzleGenerationError extends Error {}
 
 export function generatePuzzle(options: GenerateOptions): GeneratedPuzzle {
   const { difficulty, seed, catalog = CHARACTER_CATALOG, maxAttempts = 500 } = options;
-  const params = DIFFICULTY_PARAMS[difficulty];
+  const params: DifficultyParams = {
+    ...DIFFICULTY_PARAMS[difficulty],
+    ...(options.characterCount !== undefined && { characterCount: options.characterCount }),
+  };
   const rng = createRng(seed);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const candidate = tryBuild(rng, params, catalog);
     if (!candidate) continue;
     const { characters, world, rules, statements } = candidate;
-    const puzzle: Puzzle = { id: `puzzle-${difficulty}-${seed}`, seed, difficulty, characters, statements, rules };
+    const puzzle: Puzzle = { id: `puzzle-${difficulty}-${params.characterCount}-${seed}`, seed, difficulty, characters, statements, rules };
 
     // Never ship a puzzle that has not passed the solver.
     const solutions = solve(puzzle);
