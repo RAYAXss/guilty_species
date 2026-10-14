@@ -1,9 +1,8 @@
+import { clampCharacterCount } from "../../domain/generator/difficulty";
 import { generatePuzzle } from "../../domain/generator/generate";
 import type { Difficulty, Puzzle } from "../../domain/puzzle/types";
 
 export const DIFFICULTY_ORDER: readonly Difficulty[] = ["facile", "normal", "difficile", "expert"];
-export const MIN_CHARACTERS = 3;
-export const MAX_CHARACTERS = 8;
 export const MAX_ATTEMPTS = 2;
 
 export function nextDifficulty(d: Difficulty): Difficulty {
@@ -37,6 +36,7 @@ export interface GameState {
 
 export type GameAction =
   | { type: "setCharacterCount"; count: number }
+  | { type: "setDifficulty"; difficulty: Difficulty }
   | { type: "start"; seed: number }
   | { type: "accuse"; characterId: string }
   | { type: "dismissFeedback" }
@@ -45,18 +45,24 @@ export type GameAction =
 export const initialState: GameState = {
   screen: "menu",
   difficulty: "facile",
-  characterCount: 5,
+  characterCount: 4,
   round: null,
   feedback: null,
   lastResult: null,
 };
 
-const clampCount = (n: number) => Math.min(MAX_CHARACTERS, Math.max(MIN_CHARACTERS, Math.round(n)));
-
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "setCharacterCount":
-      return { ...state, characterCount: clampCount(action.count) };
+      return { ...state, characterCount: clampCharacterCount(state.difficulty, action.count) };
+
+    case "setDifficulty":
+      return {
+        ...state,
+        difficulty: action.difficulty,
+        characterCount: clampCharacterCount(action.difficulty, state.characterCount),
+        lastResult: null,
+      };
 
     case "start": {
       const { puzzle, solution } = generatePuzzle({
@@ -94,13 +100,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!feedback) return state;
       if (feedback.kind === "retry") return { ...state, feedback: null };
       // Round over: back to the menu. Win => next difficulty, loss => same difficulty.
+      const difficulty = feedback.kind === "won" ? nextDifficulty(state.difficulty) : state.difficulty;
       return {
         ...state,
         screen: "menu",
         round: null,
         feedback: null,
         lastResult: feedback.kind,
-        difficulty: feedback.kind === "won" ? nextDifficulty(state.difficulty) : state.difficulty,
+        difficulty,
+        characterCount: clampCharacterCount(difficulty, state.characterCount),
       };
     }
 

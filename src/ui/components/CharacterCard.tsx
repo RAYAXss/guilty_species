@@ -2,6 +2,7 @@ import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } fro
 import { Ban, Check, Quote } from "lucide-react";
 import type { Character } from "../../domain/characters/types";
 import { alignmentStyle } from "../tokens/alignment";
+import { speciesColors } from "../tokens/species";
 import { motionTokens } from "../tokens/motion";
 import { AlignmentBadge } from "./AlignmentBadge";
 import { Portrait } from "./Portrait";
@@ -27,6 +28,9 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
   const innocent = state === "innocent";
   const selected = state === "selected";
   const align = alignmentStyle[character.alignment];
+  const colors = speciesColors(character.species);
+  // A div for decorative previews: never focusable, so no aria-hidden/focus conflict.
+  const Tag = (preview ? motion.div : motion.button) as typeof motion.button;
   const canPop = !innocent && !reduce;
 
   const mx = useMotionValue(0);
@@ -53,11 +57,9 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
       animate={{ opacity: 1, y: selected && !reduce ? -8 : 0, scale: 1 }}
       transition={{ ...motionTokens.spring.soft, delay: index * motionTokens.stagger }}
     >
-      <motion.button
+      <Tag
         type="button"
         disabled={innocent}
-        tabIndex={preview ? -1 : undefined}
-        aria-hidden={preview || undefined}
         aria-pressed={preview ? undefined : selected}
         aria-label={preview ? undefined : `${character.name}, ${character.species}, ${align.label}${innocent ? ", innocent" : ""}`}
         onClick={() => onSelect?.(character.id)}
@@ -68,8 +70,11 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
         whileHover={canPop ? "hover" : "rest"}
         whileFocus={canPop ? "hover" : "rest"}
         whileTap={canPop && !preview ? { scale: 0.97 } : undefined}
-        style={canPop ? { rotateX, rotateY, transformPerspective: 800 } : undefined}
-        className={`relative flex h-full w-full cursor-pointer flex-col rounded-card border-[3px] bg-surface p-2.5 text-left transition-colors disabled:cursor-default ${
+        style={{
+          ...(canPop ? { rotateX, rotateY, transformPerspective: 800 } : {}),
+          ...(selected ? {} : { borderColor: `${colors.solid}66` }),
+        }}
+        className={`group relative flex h-full w-full cursor-pointer flex-col rounded-card border-[3px] bg-surface p-2.5 text-left transition-colors disabled:cursor-default ${
           selected ? "border-primary shadow-[0_8px_0_#2358e8]" : "border-ink/10 shadow-[0_6px_0_rgba(29,26,74,0.14)]"
         }`}
       >
@@ -77,10 +82,10 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
         <span className="relative block h-44">
           <span
             className="absolute inset-0 block overflow-hidden"
-            style={{ borderRadius: "var(--radius-window)", background: `linear-gradient(165deg, ${align.soft}, #ffffff 130%)` }}
+            style={{ borderRadius: "var(--radius-window)", background: `linear-gradient(165deg, ${colors.soft}, #ffffff 130%)` }}
           >
-            <span className="absolute -right-6 -top-8 block size-28 rounded-full opacity-25" style={{ background: align.solid }} />
-            <span className="absolute -bottom-10 -left-8 block size-24 rounded-full opacity-15" style={{ background: align.solid }} />
+            <span className="absolute -right-6 -top-8 block size-28 rounded-full opacity-25" style={{ background: colors.solid }} />
+            <span className="absolute -bottom-10 -left-8 block size-24 rounded-full opacity-15" style={{ background: colors.solid }} />
           </span>
           <motion.span
             className="absolute inset-0 flex items-end justify-center"
@@ -89,10 +94,12 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
             style={{ clipPath: FRAME }}
           >
             <motion.span
-              className={`block w-[78%] origin-bottom ${innocent ? "grayscale opacity-60" : ""}`}
+              className={`block w-[78%] origin-bottom transition-[filter] duration-200 ${
+                innocent ? "grayscale opacity-60" : "group-hover:drop-shadow-[0_10px_8px_rgba(29,26,74,0.28)] group-focus-visible:drop-shadow-[0_10px_8px_rgba(29,26,74,0.28)]"
+              }`}
               variants={{
-                rest: { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(29,26,74,0))" },
-                hover: { y: -10, scale: 1.45, filter: "drop-shadow(0 10px 8px rgba(29,26,74,0.28))" },
+                rest: { y: 0, scale: 1 },
+                hover: { y: -10, scale: 1.45 },
               }}
               transition={motionTokens.spring.lively}
             >
@@ -136,7 +143,7 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
           <Quote size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden />
           <span>{statement}</span>
         </span>
-      </motion.button>
+      </Tag>
     </motion.li>
   );
 }

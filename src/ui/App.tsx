@@ -7,12 +7,14 @@ import { MenuScreen } from "./screens/MenuScreen";
 export function App() {
   const game = useGame();
   const { state } = game;
-  useEffect(() => window.scrollTo(0, 0), [state.screen]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [state.screen]);
   return (
     <MotionConfig reducedMotion="user">
       <AnimatePresence mode="wait">
         {state.screen === "menu" ? (
-          <MenuScreen key="menu" state={state} onSetCount={game.setCharacterCount} onStart={game.start} />
+          <MenuScreen key="menu" state={state} onSetCount={game.setCharacterCount} onSetDifficulty={game.setDifficulty} onStart={game.start} />
         ) : (
           <GameScreen
             key={state.round?.puzzle.id}

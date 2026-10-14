@@ -9,15 +9,24 @@ const innocents = (s: GameState) => s.round!.puzzle.characters.filter((c) => c.i
 
 describe("game session", () => {
   it("starts a round with the chosen number of characters and 2 attempts", () => {
-    const s = started({ characterCount: 6 });
+    const s = started({ difficulty: "difficile", characterCount: 6 });
     expect(s.screen).toBe("playing");
     expect(s.round?.puzzle.characters).toHaveLength(6);
     expect(s.round?.attemptsLeft).toBe(2);
   });
 
-  it("clamps the character count", () => {
-    expect(gameReducer(initialState, { type: "setCharacterCount", count: 99 }).characterCount).toBe(8);
-    expect(gameReducer(initialState, { type: "setCharacterCount", count: 0 }).characterCount).toBe(3);
+  it("keeps the character count inside the difficulty range", () => {
+    const at = (difficulty: GameState["difficulty"], count: number) =>
+      gameReducer({ ...initialState, difficulty }, { type: "setCharacterCount", count }).characterCount;
+    expect(at("facile", 8)).toBe(4);
+    expect(at("facile", 0)).toBe(3);
+    expect(at("expert", 3)).toBe(6);
+    expect(at("expert", 99)).toBe(8);
+  });
+
+  it("re-clamps the count when the difficulty changes", () => {
+    const s = gameReducer({ ...initialState, difficulty: "expert", characterCount: 8 }, { type: "setDifficulty", difficulty: "facile" });
+    expect(s.characterCount).toBe(4);
   });
 
   it("win: returns to menu with the next difficulty", () => {
@@ -63,6 +72,12 @@ describe("game session", () => {
     let s = started();
     s = gameReducer(s, { type: "accuse", characterId: innocentOf(s) });
     expect(gameReducer(s, { type: "accuse", characterId: s.round!.culpritId })).toBe(s);
+  });
+
+  it("lets the player pick any difficulty from the menu", () => {
+    const s = gameReducer(initialState, { type: "setDifficulty", difficulty: "expert" });
+    expect(s.difficulty).toBe("expert");
+    expect(gameReducer(s, { type: "start", seed: 3 }).round?.puzzle.difficulty).toBe("expert");
   });
 
   it("caps difficulty at expert", () => {

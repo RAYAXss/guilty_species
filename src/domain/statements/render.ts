@@ -16,12 +16,22 @@ export function renderPredicate(p: LogicalPredicate, characters: readonly Charac
     case "not":
       return `Il est faux que : ${renderPredicate(p.operand, characters)}`;
     case "and":
-      return p.operands.map((o) => renderPredicate(o, characters)).join(", et ");
+      return joinOperands(p.operands, characters, ", et ");
     case "or":
-      return p.operands.map((o) => renderPredicate(o, characters)).join(", ou ");
+      return joinOperands(p.operands, characters, ", ou ");
   }
 }
 
 export function renderStatement(p: LogicalPredicate, characters: readonly Character[]): string {
   return `${renderPredicate(p, characters)}.`;
+}
+
+/** Lowercases the generic openers ("Le coupable...") of operands that follow another clause; names stay capitalized. */
+function joinOperands(operands: LogicalPredicate[], characters: readonly Character[], sep: string): string {
+  return operands
+    .map((o, i) => {
+      const text = renderPredicate(o, characters);
+      return i === 0 ? text : text.replace(/^(Le coupable|Il est faux)/, (m) => m.toLowerCase());
+    })
+    .join(sep);
 }

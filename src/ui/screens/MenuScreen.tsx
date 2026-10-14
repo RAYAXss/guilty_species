@@ -1,13 +1,16 @@
 import { motion } from "motion/react";
-import { Check, Frown, PartyPopper, Play, Star } from "lucide-react";
+import { Frown, PartyPopper, Play, Star } from "lucide-react";
+import type { Difficulty } from "../../domain/puzzle/types";
 import { CHARACTER_CATALOG } from "../../domain/characters/catalog";
-import { DIFFICULTY_ORDER, MAX_CHARACTERS, MIN_CHARACTERS, type GameState } from "../../application/game/session";
+import { DIFFICULTY_ORDER, type GameState } from "../../application/game/session";
+import { characterRange } from "../../domain/generator/difficulty";
 import { CharacterCard } from "../components/CharacterCard";
 import { motionTokens } from "../tokens/motion";
 
 interface Props {
   state: GameState;
   onSetCount: (n: number) => void;
+  onSetDifficulty: (d: Difficulty) => void;
   onStart: () => void;
 }
 
@@ -17,11 +20,11 @@ const HERO = [
   { id: "varek", say: "Gorak dit la vérité.", tilt: 6 },
 ].map((h) => ({ ...h, character: CHARACTER_CATALOG.find((c) => c.id === h.id)! }));
 
-const counts = Array.from({ length: MAX_CHARACTERS - MIN_CHARACTERS + 1 }, (_, i) => MIN_CHARACTERS + i);
-
-export function MenuScreen({ state, onSetCount, onStart }: Props) {
+export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Props) {
   const { difficulty, characterCount, lastResult } = state;
   const level = DIFFICULTY_ORDER.indexOf(difficulty);
+  const { min, max } = characterRange(difficulty);
+  const counts = Array.from({ length: max - min + 1 }, (_, i) => min + i);
 
   return (
     <motion.main
@@ -66,27 +69,32 @@ export function MenuScreen({ state, onSetCount, onStart }: Props) {
       )}
 
       <section className="w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-5 shadow-[0_6px_0_#1d1a4a]">
-        <h2 className="font-display text-xl font-extrabold">Niveau</h2>
-        <ol className="mt-2 grid grid-cols-4 gap-2">
+        <h2 id="level-label" className="font-display text-xl font-extrabold">
+          Niveau
+        </h2>
+        <div role="radiogroup" aria-labelledby="level-label" className="mt-2 grid grid-cols-4 gap-2">
           {DIFFICULTY_ORDER.map((d, i) => {
             const current = i === level;
-            const done = i < level;
             return (
-              <li
+              <button
                 key={d}
-                aria-current={current ? "step" : undefined}
-                className={`flex flex-col items-center gap-1 rounded-2xl border-[3px] px-1 py-2 text-center text-sm font-bold sm:text-base ${
-                  current ? "border-ink bg-sun" : done ? "border-success/40 bg-pacifiste-soft" : "border-ink/10 text-muted"
+                role="radio"
+                aria-checked={current}
+                onClick={() => onSetDifficulty(d)}
+                className={`flex flex-col items-center gap-1 rounded-2xl border-[3px] px-1 py-2 text-center text-sm font-bold transition sm:text-base ${
+                  current ? "border-ink bg-sun shadow-[0_4px_0_#1d1a4a]" : "border-ink/15 bg-white text-muted hover:border-ink"
                 }`}
               >
                 <span className="flex" aria-hidden>
-                  {done ? <Check size={18} strokeWidth={3} className="text-success" /> : Array.from({ length: i + 1 }, (_, k) => <Star key={k} size={14} className={current ? "fill-ink" : ""} />)}
+                  {Array.from({ length: i + 1 }, (_, k) => (
+                    <Star key={k} size={14} className={current ? "fill-ink" : ""} />
+                  ))}
                 </span>
                 {d}
-              </li>
+              </button>
             );
           })}
-        </ol>
+        </div>
 
         <h2 id="count-label" className="mt-5 font-display text-xl font-extrabold">
           Créatures dans la manche
