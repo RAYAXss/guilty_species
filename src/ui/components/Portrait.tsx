@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { CharacterAlignment } from "../../domain/characters/types";
 import { alignmentStyle } from "../tokens/alignment";
 
@@ -139,7 +139,7 @@ const ART: Record<string, SpeciesArt> = {
   },
 };
 
-export function Portrait({ species, alignment, className }: { species: string; alignment: CharacterAlignment; className?: string }) {
+function SvgPortrait({ species, alignment, className }: { species: string; alignment: CharacterAlignment; className?: string }) {
   const art = ART[species] ?? ART["humain"]!;
   const cloak = alignmentStyle[alignment].solid;
   const eyes = art.eyes ?? { white: "#fff", pupil: "#2b2140" };
@@ -164,5 +164,34 @@ export function Portrait({ species, alignment, className }: { species: string; a
       {art.mouth ?? smile}
       {art.front}
     </svg>
+  );
+}
+
+interface PortraitProps {
+  species: string;
+  alignment: CharacterAlignment;
+  /** Character name, used for the accessible label of PNG portraits. */
+  name?: string;
+  /** PNG portrait URL. If missing or failing to load, the SVG illustration is used. */
+  src?: string;
+  className?: string;
+}
+
+/** PNG portrait with a graceful fallback to the species SVG. Same 200x220 box either way. */
+export function Portrait({ species, alignment, name, src, className }: PortraitProps) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+
+  if (!src || failed) return <SvgPortrait species={species} alignment={alignment} className={className} />;
+  return (
+    <img
+      src={src}
+      alt={name ? `Portrait de ${name}, ${species}` : `Portrait : ${species}`}
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+      onError={() => setFailed(true)}
+      className={`${className ?? ""} aspect-[200/220] object-contain object-bottom select-none`}
+    />
   );
 }

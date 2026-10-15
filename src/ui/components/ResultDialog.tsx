@@ -5,6 +5,7 @@ import type { Difficulty } from "../../domain/puzzle/types";
 import type { Feedback } from "../../application/game/session";
 import { motionTokens } from "../tokens/motion";
 import { Confetti } from "./Confetti";
+import { portraitSrc } from "../tokens/portrait";
 import { Portrait } from "./Portrait";
 
 interface Props {
@@ -46,7 +47,7 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/55 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-ink/55 p-3 sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: motionTokens.duration.fast }}
@@ -59,7 +60,7 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
         initial={{ scale: 0.8, y: 30, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         transition={motionTokens.spring.lively}
-        className="relative w-full max-w-md rounded-card border-[3px] border-ink bg-surface p-6 text-center shadow-[0_8px_0_#1d1a4a]"
+        className="relative w-full max-w-md rounded-card border-[3px] border-ink bg-surface p-4 text-center sm:p-6 shadow-[0_8px_0_#1d1a4a]"
       >
         {feedback.kind === "won" && <Confetti />}
         {culprit && (
@@ -67,21 +68,21 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
             initial={{ y: 40, scale: 0.7 }}
             animate={{ y: 0, scale: 1 }}
             transition={motionTokens.spring.lively}
-            className={`mx-auto -mt-2 mb-3 w-40 overflow-hidden rounded-3xl border-[3px] border-ink ${copy.accent}`}
+            className={`mx-auto -mt-2 mb-3 w-28 sm:w-40 overflow-hidden rounded-3xl border-[3px] border-ink ${copy.accent}`}
           >
-            <Portrait species={culprit.species} alignment={culprit.alignment} className="block w-full" />
+            <Portrait species={culprit.species} alignment={culprit.alignment} name={culprit.name} src={portraitSrc(culprit)} className="block w-full" />
           </motion.div>
         )}
-        <h2 id="result-title" className="font-display text-3xl font-extrabold leading-tight">
+        <h2 id="result-title" className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
           {copy.title}
         </h2>
-        <p id="result-body" className="mx-auto mt-2 max-w-xs text-lg font-semibold text-muted">
+        <p id="result-body" className="mx-auto mt-2 max-w-xs text-base sm:text-lg font-semibold text-muted">
           {copy.body}
         </p>
         <button
           autoFocus
           onClick={onContinue}
-          className="mt-5 inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-6 py-3 font-display text-xl font-bold text-white shadow-[0_5px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_1px_0_#1d1a4a]"
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-5 py-2.5 font-display text-lg sm:mt-5 sm:px-6 sm:py-3 sm:text-xl font-bold text-white shadow-[0_5px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_1px_0_#1d1a4a]"
         >
           {copy.cta}
           <copy.Icon size={20} aria-hidden />
