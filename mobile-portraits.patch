@@ -1,0 +1,478 @@
+From 42e70fe9c4abff15ee4be26b064bee2666468805 Mon Sep 17 00:00:00 2001
+From: claude <c@c>
+Date: Thu, 15 Oct 2026 13:24:52 +0000
+Subject: [PATCH] feat: mobile-first compact UI and PNG portraits with SVG
+ fallback
+
+---
+ index.html                           |  2 +-
+ public/portraits/.gitkeep            |  0
+ src/ui/components/AlignmentBadge.tsx |  4 ++--
+ src/ui/components/CharacterCard.tsx  | 35 +++++++++++++++++-----------
+ src/ui/components/Portrait.tsx       | 33 ++++++++++++++++++++++++--
+ src/ui/components/ResultDialog.tsx   | 15 ++++++------
+ src/ui/components/RulesBoard.tsx     | 12 +++++-----
+ src/ui/screens/GameScreen.tsx        | 34 +++++++++++++--------------
+ src/ui/screens/MenuScreen.tsx        | 20 ++++++++--------
+ src/ui/tokens/portrait.ts            | 14 +++++++++++
+ 10 files changed, 110 insertions(+), 59 deletions(-)
+ create mode 100644 public/portraits/.gitkeep
+ create mode 100644 src/ui/tokens/portrait.ts
+
+diff --git a/index.html b/index.html
+index 31393ba..fe3c5f2 100644
+--- a/index.html
++++ b/index.html
+@@ -2,7 +2,7 @@
+ <html lang="fr">
+   <head>
+     <meta charset="UTF-8" />
+-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%90%89%3C/text%3E%3C/svg%3E" />
+     <title>Fantasy Deduction</title>
+     <link rel="preconnect" href="https://fonts.googleapis.com" />
+diff --git a/public/portraits/.gitkeep b/public/portraits/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/src/ui/components/AlignmentBadge.tsx b/src/ui/components/AlignmentBadge.tsx
+index ca5217c..183b722 100644
+--- a/src/ui/components/AlignmentBadge.tsx
++++ b/src/ui/components/AlignmentBadge.tsx
+@@ -9,8 +9,8 @@ export function AlignmentBadge({ alignment }: { alignment: CharacterAlignment })
+   const s = alignmentStyle[alignment];
+   const Icon = icons[alignment];
+   return (
+-    <span className={`inline-flex items-center gap-1 border-2 px-2 py-0.5 text-sm font-bold ${s.bg} ${s.text} ${s.border} ${s.radius}`}>
+-      <Icon size={15} strokeWidth={2.5} aria-hidden />
++    <span className={`inline-flex items-center gap-1 border-2 px-1.5 py-0.5 text-xs font-bold sm:px-2 sm:text-sm ${s.bg} ${s.text} ${s.border} ${s.radius}`}>
++      <Icon className="size-3.5 sm:size-4" strokeWidth={2.5} aria-hidden />
+       {s.label}
+     </span>
+   );
+diff --git a/src/ui/components/CharacterCard.tsx b/src/ui/components/CharacterCard.tsx
+index 96b9c6a..183ed05 100644
+--- a/src/ui/components/CharacterCard.tsx
++++ b/src/ui/components/CharacterCard.tsx
+@@ -5,6 +5,7 @@ import { alignmentStyle } from "../tokens/alignment";
+ import { speciesColors } from "../tokens/species";
+ import { motionTokens } from "../tokens/motion";
+ import { AlignmentBadge } from "./AlignmentBadge";
++import { portraitSrc } from "../tokens/portrait";
+ import { Portrait } from "./Portrait";
+ 
+ export type CardState = "idle" | "selected" | "innocent";
+@@ -66,7 +67,7 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
+         onPointerMove={onMove}
+         onPointerLeave={onLeave}
+         initial="rest"
+-        animate="rest"
++        animate={canPop && selected ? "hover" : "rest"}
+         whileHover={canPop ? "hover" : "rest"}
+         whileFocus={canPop ? "hover" : "rest"}
+         whileTap={canPop && !preview ? { scale: 0.97 } : undefined}
+@@ -74,17 +75,17 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
+           ...(canPop ? { rotateX, rotateY, transformPerspective: 800 } : {}),
+           ...(selected ? {} : { borderColor: `${colors.solid}66` }),
+         }}
+-        className={`group relative flex h-full w-full cursor-pointer flex-col rounded-card border-[3px] bg-surface p-2.5 text-left transition-colors disabled:cursor-default ${
+-          selected ? "border-primary shadow-[0_8px_0_#2358e8]" : "border-ink/10 shadow-[0_6px_0_rgba(29,26,74,0.14)]"
++        className={`group relative flex h-full w-full cursor-pointer flex-col rounded-card border-[3px] bg-surface p-1.5 text-left sm:p-2.5 transition-colors disabled:cursor-default ${
++          selected ? "border-primary shadow-[0_5px_0_#2358e8] sm:shadow-[0_8px_0_#2358e8]" : "border-ink/10 shadow-[0_4px_0_rgba(29,26,74,0.14)] sm:shadow-[0_6px_0_rgba(29,26,74,0.14)]"
+         }`}
+       >
+         {/* Portrait window */}
+-        <span className="relative block h-44">
++        <span className="relative block h-28 sm:h-44">
+           <span
+             className="absolute inset-0 block overflow-hidden"
+             style={{ borderRadius: "var(--radius-window)", background: `linear-gradient(165deg, ${colors.soft}, #ffffff 130%)` }}
+           >
+-            <span className="absolute -right-6 -top-8 block size-28 rounded-full opacity-25" style={{ background: colors.solid }} />
++            <span className="absolute -right-6 -top-8 block size-20 rounded-full opacity-25 sm:size-28" style={{ background: colors.solid }} />
+             <span className="absolute -bottom-10 -left-8 block size-24 rounded-full opacity-15" style={{ background: colors.solid }} />
+           </span>
+           <motion.span
+@@ -103,7 +104,13 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
+               }}
+               transition={motionTokens.spring.lively}
+             >
+-              <Portrait species={character.species} alignment={character.alignment} className="block h-auto w-full" />
++              <Portrait
++                species={character.species}
++                alignment={character.alignment}
++                name={character.name}
++                src={portraitSrc(character)}
++                className="block h-auto w-full"
++              />
+             </motion.span>
+           </motion.span>
+ 
+@@ -112,7 +119,7 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
+               initial={{ scale: 0 }}
+               animate={{ scale: 1 }}
+               transition={motionTokens.spring.lively}
+-              className="absolute -right-2 -top-2 grid size-8 place-items-center rounded-full border-2 border-white bg-primary text-white"
++              className="absolute -right-1.5 -top-1.5 grid size-7 sm:-right-2 sm:-top-2 sm:size-8 place-items-center rounded-full border-2 border-white bg-primary text-white"
+             >
+               <Check size={18} strokeWidth={3.5} aria-hidden />
+               <span className="sr-only">Suspect choisi</span>
+@@ -123,7 +130,7 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
+               initial={{ scale: 2.2, opacity: 0, rotate: -24 }}
+               animate={{ scale: 1, opacity: 1, rotate: -12 }}
+               transition={motionTokens.spring.lively}
+-              className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-lg border-[3px] border-danger bg-white/90 px-2 py-0.5 font-display text-lg font-extrabold text-danger"
++              className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-lg border-[3px] border-danger bg-white/90 px-1.5 py-0.5 font-display text-sm font-extrabold text-danger sm:px-2 sm:text-lg"
+             >
+               <Ban size={18} strokeWidth={3} aria-hidden />
+               Innocent
+@@ -131,16 +138,16 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
+           )}
+         </span>
+ 
+-        <span className="mb-3 mt-3 block px-1">
+-          <span className="block font-display text-2xl font-extrabold leading-none">{character.name}</span>
+-          <span className="mt-1 block text-[0.95rem] font-semibold capitalize text-muted">{character.species}</span>
+-          <span className="mt-2 block">
++        <span className="mb-2 mt-2 block px-0.5 sm:mb-3 sm:mt-3 sm:px-1">
++          <span className="block truncate font-display text-lg font-extrabold leading-none sm:text-2xl">{character.name}</span>
++          <span className="mt-0.5 block text-xs font-semibold capitalize text-muted sm:mt-1 sm:text-[0.95rem]">{character.species}</span>
++          <span className="mt-1.5 block sm:mt-2">
+             <AlignmentBadge alignment={character.alignment} />
+           </span>
+         </span>
+ 
+-        <span className="mt-auto flex gap-2 rounded-2xl bg-bg p-3 text-[0.95rem] font-semibold leading-snug">
+-          <Quote size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden />
++        <span className="mt-auto flex gap-1.5 rounded-xl bg-bg p-2 text-[0.8rem] font-semibold leading-snug sm:gap-2 sm:rounded-2xl sm:p-3 sm:text-[0.95rem]">
++          <Quote className="mt-0.5 size-3.5 shrink-0 text-primary sm:size-4" aria-hidden />
+           <span>{statement}</span>
+         </span>
+       </Tag>
+diff --git a/src/ui/components/Portrait.tsx b/src/ui/components/Portrait.tsx
+index b079b01..35ce8d9 100644
+--- a/src/ui/components/Portrait.tsx
++++ b/src/ui/components/Portrait.tsx
+@@ -1,4 +1,4 @@
+-import type { ReactNode } from "react";
++import { useEffect, useState, type ReactNode } from "react";
+ import type { CharacterAlignment } from "../../domain/characters/types";
+ import { alignmentStyle } from "../tokens/alignment";
+ 
+@@ -139,7 +139,7 @@ const ART: Record<string, SpeciesArt> = {
+   },
+ };
+ 
+-export function Portrait({ species, alignment, className }: { species: string; alignment: CharacterAlignment; className?: string }) {
++function SvgPortrait({ species, alignment, className }: { species: string; alignment: CharacterAlignment; className?: string }) {
+   const art = ART[species] ?? ART["humain"]!;
+   const cloak = alignmentStyle[alignment].solid;
+   const eyes = art.eyes ?? { white: "#fff", pupil: "#2b2140" };
+@@ -166,3 +166,32 @@ export function Portrait({ species, alignment, className }: { species: string; a
+     </svg>
+   );
+ }
++
++interface PortraitProps {
++  species: string;
++  alignment: CharacterAlignment;
++  /** Character name, used for the accessible label of PNG portraits. */
++  name?: string;
++  /** PNG portrait URL. If missing or failing to load, the SVG illustration is used. */
++  src?: string;
++  className?: string;
++}
++
++/** PNG portrait with a graceful fallback to the species SVG. Same 200x220 box either way. */
++export function Portrait({ species, alignment, name, src, className }: PortraitProps) {
++  const [failed, setFailed] = useState(false);
++  useEffect(() => setFailed(false), [src]);
++
++  if (!src || failed) return <SvgPortrait species={species} alignment={alignment} className={className} />;
++  return (
++    <img
++      src={src}
++      alt={name ? `Portrait de ${name}, ${species}` : `Portrait : ${species}`}
++      loading="lazy"
++      decoding="async"
++      draggable={false}
++      onError={() => setFailed(true)}
++      className={`${className ?? ""} aspect-[200/220] object-contain object-bottom select-none`}
++    />
++  );
++}
+diff --git a/src/ui/components/ResultDialog.tsx b/src/ui/components/ResultDialog.tsx
+index e9be23d..6370d2c 100644
+--- a/src/ui/components/ResultDialog.tsx
++++ b/src/ui/components/ResultDialog.tsx
+@@ -5,6 +5,7 @@ import type { Difficulty } from "../../domain/puzzle/types";
+ import type { Feedback } from "../../application/game/session";
+ import { motionTokens } from "../tokens/motion";
+ import { Confetti } from "./Confetti";
++import { portraitSrc } from "../tokens/portrait";
+ import { Portrait } from "./Portrait";
+ 
+ interface Props {
+@@ -46,7 +47,7 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
+ 
+   return (
+     <motion.div
+-      className="fixed inset-0 z-50 grid place-items-center bg-ink/55 p-4"
++      className="fixed inset-0 z-50 grid place-items-center bg-ink/55 p-3 sm:p-4"
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       transition={{ duration: motionTokens.duration.fast }}
+@@ -59,7 +60,7 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
+         initial={{ scale: 0.8, y: 30, opacity: 0 }}
+         animate={{ scale: 1, y: 0, opacity: 1 }}
+         transition={motionTokens.spring.lively}
+-        className="relative w-full max-w-md rounded-card border-[3px] border-ink bg-surface p-6 text-center shadow-[0_8px_0_#1d1a4a]"
++        className="relative w-full max-w-md rounded-card border-[3px] border-ink bg-surface p-4 text-center sm:p-6 shadow-[0_8px_0_#1d1a4a]"
+       >
+         {feedback.kind === "won" && <Confetti />}
+         {culprit && (
+@@ -67,21 +68,21 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
+             initial={{ y: 40, scale: 0.7 }}
+             animate={{ y: 0, scale: 1 }}
+             transition={motionTokens.spring.lively}
+-            className={`mx-auto -mt-2 mb-3 w-40 overflow-hidden rounded-3xl border-[3px] border-ink ${copy.accent}`}
++            className={`mx-auto -mt-2 mb-3 w-28 sm:w-40 overflow-hidden rounded-3xl border-[3px] border-ink ${copy.accent}`}
+           >
+-            <Portrait species={culprit.species} alignment={culprit.alignment} className="block w-full" />
++            <Portrait species={culprit.species} alignment={culprit.alignment} name={culprit.name} src={portraitSrc(culprit)} className="block w-full" />
+           </motion.div>
+         )}
+-        <h2 id="result-title" className="font-display text-3xl font-extrabold leading-tight">
++        <h2 id="result-title" className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
+           {copy.title}
+         </h2>
+-        <p id="result-body" className="mx-auto mt-2 max-w-xs text-lg font-semibold text-muted">
++        <p id="result-body" className="mx-auto mt-2 max-w-xs text-base sm:text-lg font-semibold text-muted">
+           {copy.body}
+         </p>
+         <button
+           autoFocus
+           onClick={onContinue}
+-          className="mt-5 inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-6 py-3 font-display text-xl font-bold text-white shadow-[0_5px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_1px_0_#1d1a4a]"
++          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-5 py-2.5 font-display text-lg sm:mt-5 sm:px-6 sm:py-3 sm:text-xl font-bold text-white shadow-[0_5px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_1px_0_#1d1a4a]"
+         >
+           {copy.cta}
+           <copy.Icon size={20} aria-hidden />
+diff --git a/src/ui/components/RulesBoard.tsx b/src/ui/components/RulesBoard.tsx
+index e422cac..999ae5c 100644
+--- a/src/ui/components/RulesBoard.tsx
++++ b/src/ui/components/RulesBoard.tsx
+@@ -13,12 +13,12 @@ const icons = {
+ /** Always visible above the cards: rules must be consultable at any time. */
+ export function RulesBoard({ rules }: { rules: Rule[] }) {
+   return (
+-    <section aria-labelledby="rules-title" className="rounded-card border-[3px] border-ink bg-sun/90 p-4 shadow-[0_6px_0_#1d1a4a]">
+-      <h2 id="rules-title" className="flex items-center gap-2 font-display text-xl font-extrabold">
+-        <ScrollText size={22} aria-hidden />
++    <section aria-labelledby="rules-title" className="rounded-card border-[3px] border-ink bg-sun/90 p-3 shadow-[0_4px_0_#1d1a4a] sm:p-4 sm:shadow-[0_6px_0_#1d1a4a]">
++      <h2 id="rules-title" className="flex items-center gap-2 font-display text-base font-extrabold sm:text-xl">
++        <ScrollText className="size-5 sm:size-[22px]" aria-hidden />
+         Règles de la manche
+       </h2>
+-      <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
++      <ul className="mt-2 grid gap-1.5 sm:mt-3 sm:gap-2 sm:grid-cols-2 lg:grid-cols-3">
+         {rules.map((rule, i) => {
+           const Icon = icons[rule.type];
+           return (
+@@ -27,9 +27,9 @@ export function RulesBoard({ rules }: { rules: Rule[] }) {
+               initial={{ opacity: 0, x: -12 }}
+               animate={{ opacity: 1, x: 0 }}
+               transition={{ ...motionTokens.spring.soft, delay: i * motionTokens.stagger }}
+-              className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-base font-bold"
++              className="flex items-center gap-2 rounded-xl bg-white px-2.5 py-2 text-sm font-bold sm:gap-3 sm:rounded-2xl sm:px-3 sm:py-2.5 sm:text-base"
+             >
+-              <Icon size={22} className="shrink-0 text-primary" aria-hidden />
++              <Icon className="size-5 shrink-0 text-primary sm:size-[22px]" aria-hidden />
+               {renderRule(rule)}
+             </motion.li>
+           );
+diff --git a/src/ui/screens/GameScreen.tsx b/src/ui/screens/GameScreen.tsx
+index 5195bf1..6b33a11 100644
+--- a/src/ui/screens/GameScreen.tsx
++++ b/src/ui/screens/GameScreen.tsx
+@@ -31,33 +31,33 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
+ 
+   return (
+     <motion.main
+-      className="mx-auto flex min-h-screen max-w-6xl flex-col gap-5 px-4 pb-8 pt-5"
++      className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-3 px-3 pb-6 pt-3 sm:gap-5 sm:px-4 sm:pb-8 sm:pt-5"
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       exit={{ opacity: 0 }}
+       transition={{ duration: motionTokens.duration.normal }}
+     >
+-      <header className="flex flex-wrap items-center justify-between gap-3">
++      <header className="flex items-center justify-between gap-2 sm:gap-3">
+         <button
+           onClick={onQuit}
+-          className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink/20 bg-white px-4 py-2 font-bold hover:border-ink"
++          aria-label="Quitter la manche"
++          className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-2xl border-[3px] border-ink/20 bg-white font-bold hover:border-ink sm:size-auto sm:px-4 sm:py-2"
+         >
+           <ArrowLeft size={18} aria-hidden />
+-          Quitter la manche
++          <span className="hidden sm:inline">Quitter la manche</span>
+         </button>
+-        <h1 className="font-display text-2xl font-extrabold">
++        <h1 className="min-w-0 truncate text-center font-display text-base font-extrabold sm:text-2xl">
+           Niveau {difficulty} <span className="text-muted">· {puzzle.characters.length} créatures</span>
+         </h1>
+-        <div className="flex items-center gap-1 rounded-2xl bg-white px-3 py-2 font-bold" role="status">
++        <div className="flex shrink-0 items-center gap-0.5 rounded-2xl bg-white px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
+           {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
+             <Heart
+               key={i}
+-              size={22}
+               aria-hidden
+-              className={i < attemptsLeft ? "fill-danger text-danger" : "text-ink/25"}
++              className={`size-[18px] sm:size-[22px] ${i < attemptsLeft ? "fill-danger text-danger" : "text-ink/25"}`}
+             />
+           ))}
+-          <span className="ml-1">
++          <span className="ml-1 hidden sm:inline">
+             {attemptsLeft} essai{attemptsLeft > 1 ? "s" : ""}
+           </span>
+         </div>
+@@ -65,8 +65,8 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
+ 
+       <RulesBoard rules={puzzle.rules} />
+ 
+-      <section aria-label="Suspects" className="flex-1 pb-4">
+-        <ul className="grid justify-center gap-x-5 gap-y-8 pt-10 [grid-template-columns:repeat(auto-fit,minmax(9.5rem,14rem))]">
++      <section aria-label="Suspects" className="flex-1 pb-2 sm:pb-4">
++        <ul className="grid grid-cols-2 gap-x-3 gap-y-5 pt-5 sm:justify-center sm:gap-x-5 sm:gap-y-8 sm:pt-10 sm:[grid-template-columns:repeat(auto-fit,minmax(9.5rem,14rem))]">
+           {puzzle.characters.map((c, i) => (
+             <CharacterCard
+               key={c.id}
+@@ -80,18 +80,18 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
+         </ul>
+       </section>
+ 
+-      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-card border-[3px] border-ink bg-white p-3 shadow-[0_6px_0_#1d1a4a]">
+-        <p className="flex items-center gap-2 px-2 font-bold" aria-live="polite">
+-          <MousePointerClick size={20} className="text-primary" aria-hidden />
+-          {selected ? `Suspect choisi : ${selected.name}` : "Choisis un suspect pour l'accuser."}
++      <div className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-20 flex items-center justify-between gap-2 rounded-2xl border-[3px] border-ink bg-white p-2 shadow-[0_4px_0_#1d1a4a] sm:bottom-4 sm:gap-3 sm:rounded-card sm:p-3 sm:shadow-[0_6px_0_#1d1a4a]">
++        <p className="flex min-w-0 flex-1 items-center gap-2 px-1 text-sm font-bold sm:px-2 sm:text-base" aria-live="polite">
++          <MousePointerClick className="size-[18px] shrink-0 text-primary sm:size-5" aria-hidden />
++          <span className="min-w-0 truncate">{selected ? `Suspect : ${selected.name}` : "Choisis un suspect."}</span>
+         </p>
+         <button
+           onClick={accuse}
+           disabled={!selected || !!feedback}
+-          className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-6 py-3 font-display text-xl font-bold text-white shadow-[0_5px_0_#1d1a4a] transition enabled:active:translate-y-1 enabled:active:shadow-[0_1px_0_#1d1a4a] disabled:cursor-not-allowed disabled:border-ink/20 disabled:bg-ink/10 disabled:text-muted disabled:shadow-none"
++          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border-[3px] border-ink bg-primary px-3.5 py-1.5 font-display text-base font-bold text-white shadow-[0_4px_0_#1d1a4a] sm:gap-2 sm:rounded-2xl sm:px-6 sm:py-3 sm:text-xl sm:shadow-[0_5px_0_#1d1a4a] transition enabled:active:translate-y-1 enabled:active:shadow-[0_1px_0_#1d1a4a] disabled:cursor-not-allowed disabled:border-ink/20 disabled:bg-ink/10 disabled:text-muted disabled:shadow-none"
+         >
+           <Gavel size={20} aria-hidden />
+-          {selected ? `Accuser ${selected.name}` : "Accuser"}
++          Accuser
+         </button>
+       </div>
+ 
+diff --git a/src/ui/screens/MenuScreen.tsx b/src/ui/screens/MenuScreen.tsx
+index 2e1054d..8143b88 100644
+--- a/src/ui/screens/MenuScreen.tsx
++++ b/src/ui/screens/MenuScreen.tsx
+@@ -28,20 +28,20 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
+ 
+   return (
+     <motion.main
+-      className="mx-auto flex min-h-screen max-w-5xl flex-col items-center gap-8 px-4 pb-10 pt-8"
++      className="mx-auto flex min-h-dvh max-w-5xl flex-col items-center gap-5 px-3 pb-8 pt-6 sm:gap-8 sm:px-4 sm:pb-10 sm:pt-8"
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       exit={{ opacity: 0 }}
+       transition={{ duration: motionTokens.duration.normal }}
+     >
+       <header className="text-center">
+-        <h1 className="font-display text-5xl font-extrabold leading-[0.95] sm:text-7xl">Fantasy Deduction</h1>
+-        <p className="mx-auto mt-3 max-w-md text-lg font-semibold text-muted">
++        <h1 className="font-display text-4xl font-extrabold leading-[0.95] sm:text-7xl">Fantasy Deduction</h1>
++        <p className="mx-auto mt-2 max-w-md text-base font-semibold sm:mt-3 sm:text-lg text-muted">
+           Chaque créature affirme quelque chose. Les règles disent qui dit vrai. Un seul suspect tient jusqu'au bout.
+         </p>
+       </header>
+ 
+-      <div aria-hidden className="grid w-full max-w-2xl grid-cols-3 gap-3 pt-10 sm:gap-6">
++      <div aria-hidden className="grid w-full max-w-2xl grid-cols-3 gap-2 pt-6 sm:gap-6 sm:pt-10">
+         {HERO.map((h, i) => (
+           <div key={h.id} style={{ rotate: `${h.tilt}deg`, marginTop: h.tilt === 0 ? 0 : 14 }}>
+             <ul>
+@@ -68,11 +68,11 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
+         </motion.p>
+       )}
+ 
+-      <section className="w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-5 shadow-[0_6px_0_#1d1a4a]">
++      <section className="w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-4 shadow-[0_6px_0_#1d1a4a] sm:p-5">
+         <h2 id="level-label" className="font-display text-xl font-extrabold">
+           Niveau
+         </h2>
+-        <div role="radiogroup" aria-labelledby="level-label" className="mt-2 grid grid-cols-4 gap-2">
++        <div role="radiogroup" aria-labelledby="level-label" className="mt-2 grid grid-cols-4 gap-1.5 sm:gap-2">
+           {DIFFICULTY_ORDER.map((d, i) => {
+             const current = i === level;
+             return (
+@@ -81,7 +81,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
+                 role="radio"
+                 aria-checked={current}
+                 onClick={() => onSetDifficulty(d)}
+-                className={`flex flex-col items-center gap-1 rounded-2xl border-[3px] px-1 py-2 text-center text-sm font-bold transition sm:text-base ${
++                className={`flex flex-col items-center gap-1 rounded-2xl border-[3px] min-h-11 px-1 py-2 text-center text-xs font-bold transition sm:text-base ${
+                   current ? "border-ink bg-sun shadow-[0_4px_0_#1d1a4a]" : "border-ink/15 bg-white text-muted hover:border-ink"
+                 }`}
+               >
+@@ -96,7 +96,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
+           })}
+         </div>
+ 
+-        <h2 id="count-label" className="mt-5 font-display text-xl font-extrabold">
++        <h2 id="count-label" className="mt-4 font-display text-lg font-extrabold sm:mt-5 sm:text-xl">
+           Créatures dans la manche
+         </h2>
+         <div role="radiogroup" aria-labelledby="count-label" className="mt-2 flex flex-wrap gap-2">
+@@ -106,7 +106,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
+               role="radio"
+               aria-checked={n === characterCount}
+               onClick={() => onSetCount(n)}
+-              className={`size-12 rounded-2xl border-[3px] font-display text-xl font-bold transition ${
++              className={`size-11 rounded-2xl border-[3px] font-display text-xl font-bold transition ${
+                 n === characterCount ? "border-ink bg-primary text-white shadow-[0_4px_0_#1d1a4a]" : "border-ink/20 bg-white hover:border-ink"
+               }`}
+             >
+@@ -117,7 +117,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
+ 
+         <button
+           onClick={onStart}
+-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-6 py-4 font-display text-2xl font-bold text-white shadow-[0_6px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_2px_0_#1d1a4a]"
++          className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-6 py-3 font-display text-xl sm:mt-6 sm:py-4 sm:text-2xl font-bold text-white shadow-[0_6px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_2px_0_#1d1a4a]"
+         >
+           <Play size={24} className="fill-white" aria-hidden />
+           Lancer la manche
+diff --git a/src/ui/tokens/portrait.ts b/src/ui/tokens/portrait.ts
+new file mode 100644
+index 0000000..215900b
+--- /dev/null
++++ b/src/ui/tokens/portrait.ts
+@@ -0,0 +1,14 @@
++import type { Character } from "../../domain/characters/types";
++
++/**
++ * Where a character's PNG portrait lives.
++ * `character.portrait` wins (path relative to /public or absolute URL);
++ * otherwise we follow the convention `public/portraits/<id>.png`.
++ */
++export function portraitSrc(character: Pick<Character, "id" | "portrait">): string {
++  const base = import.meta.env.BASE_URL;
++  if (character.portrait) {
++    return /^(https?:)?\/\//.test(character.portrait) ? character.portrait : `${base}${character.portrait.replace(/^\//, "")}`;
++  }
++  return `${base}portraits/${character.id}.png`;
++}
+-- 
+2.43.0
+
