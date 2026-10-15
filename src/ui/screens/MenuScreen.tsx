@@ -35,8 +35,9 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
       transition={{ duration: motionTokens.duration.normal }}
     >
       <header className="text-center">
-        <h1 className="font-display text-4xl font-extrabold leading-[0.95] sm:text-7xl">Fantasy Deduction</h1>
-        <p className="mx-auto mt-2 max-w-md text-base font-semibold sm:mt-3 sm:text-lg text-muted">
+        <h1 className="font-display text-3xl font-bold uppercase leading-tight tracking-wider text-sun sm:text-6xl">Guilty Species</h1>
+        <div aria-hidden className="mx-auto mt-3 h-px w-40 bg-gradient-to-r from-transparent via-sun to-transparent sm:w-64" />
+        <p className="mx-auto mt-2 max-w-md text-base font-semibold sm:mt-3 sm:text-lg text-dim">
           Chaque créature affirme quelque chose. Les règles disent qui dit vrai. Un seul suspect tient jusqu'au bout.
         </p>
       </header>
@@ -57,7 +58,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={motionTokens.spring.lively}
-          className={`flex items-center gap-2 rounded-2xl border-[3px] px-4 py-2 text-lg font-bold ${
+          className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2 text-lg font-bold ${
             lastResult === "won" ? "border-success bg-pacifiste-soft text-success" : "border-danger bg-belliqueux-soft text-danger"
           }`}
         >
@@ -68,7 +69,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
         </motion.p>
       )}
 
-      <section className="w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-4 shadow-[0_6px_0_#1d1a4a] sm:p-5">
+      <section className="w-full max-w-2xl rounded-card border-2 border-sun bg-surface text-ink p-4 shadow-[0_6px_0_#07050d] sm:p-5">
         <h2 id="level-label" className="font-display text-xl font-extrabold">
           Niveau
         </h2>
@@ -81,8 +82,8 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
                 role="radio"
                 aria-checked={current}
                 onClick={() => onSetDifficulty(d)}
-                className={`flex flex-col items-center gap-1 rounded-2xl border-[3px] min-h-11 px-1 py-2 text-center text-xs font-bold transition sm:text-base ${
-                  current ? "border-ink bg-sun shadow-[0_4px_0_#1d1a4a]" : "border-ink/15 bg-white text-muted hover:border-ink"
+                className={`flex flex-col items-center gap-1 rounded-lg border-2 min-h-11 px-1 py-2 text-center text-xs font-bold transition sm:text-base ${
+                  current ? "border-ink bg-sun shadow-[0_4px_0_#07050d]" : "border-ink/20 bg-inset text-muted hover:border-ink"
                 }`}
               >
                 <span className="flex" aria-hidden>
@@ -106,8 +107,8 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
               role="radio"
               aria-checked={n === characterCount}
               onClick={() => onSetCount(n)}
-              className={`size-11 rounded-2xl border-[3px] font-display text-xl font-bold transition ${
-                n === characterCount ? "border-ink bg-primary text-white shadow-[0_4px_0_#1d1a4a]" : "border-ink/20 bg-white hover:border-ink"
+              className={`size-11 rounded-lg border-2 font-display text-xl font-bold transition ${
+                n === characterCount ? "border-ink bg-primary text-white shadow-[0_4px_0_#07050d]" : "border-ink/20 bg-inset hover:border-ink"
               }`}
             >
               {n}
@@ -117,7 +118,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
 
         <button
           onClick={onStart}
-          className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-primary px-6 py-3 font-display text-xl sm:mt-6 sm:py-4 sm:text-2xl font-bold text-white shadow-[0_6px_0_#1d1a4a] transition active:translate-y-1 active:shadow-[0_2px_0_#1d1a4a]"
+          className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border-2 border-ink bg-primary px-6 py-3 font-display text-xl sm:mt-6 sm:py-4 sm:text-2xl font-bold text-white shadow-[0_6px_0_#07050d] transition active:translate-y-1 active:shadow-[0_2px_0_#07050d]"
         >
           <Play size={24} className="fill-white" aria-hidden />
           Lancer la manche

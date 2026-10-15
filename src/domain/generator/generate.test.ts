@@ -62,6 +62,16 @@ describe("generatePuzzle", () => {
     }
   });
 
+  it("only shows the truth-count rule, never a rule that points at the culprit", () => {
+    for (const difficulty of ["facile", "normal", "difficile", "expert"] as const) {
+      for (let seed = 1; seed <= 40; seed++) {
+        const { puzzle } = generatePuzzle({ difficulty, seed });
+        expect(puzzle.rules).toHaveLength(1);
+        expect(puzzle.rules[0]?.type).toBe("truthCount");
+      }
+    }
+  });
+
   it("throws when no unique puzzle can be generated", () => {
     expect(() => generatePuzzle({ difficulty: "facile", seed: 1, maxAttempts: 0 })).toThrow(PuzzleGenerationError);
   });

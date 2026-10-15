@@ -1,4 +1,4 @@
-# Fantasy Deduction
+# Guilty Species
 
 A fantasy logic and deduction board game built with Node.js, TypeScript and React.
 

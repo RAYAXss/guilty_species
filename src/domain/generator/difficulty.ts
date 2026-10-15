@@ -15,10 +15,10 @@ export interface DifficultyParams {
 }
 
 export const DIFFICULTY_PARAMS: Record<Difficulty, DifficultyParams> = {
-  facile: { characterCount: 4, minCharacters: 3, maxCharacters: 4, statementsPerCharacter: 1, extraRules: 1, compositeChance: 0 },
-  normal: { characterCount: 5, minCharacters: 4, maxCharacters: 5, statementsPerCharacter: 1, extraRules: 1, compositeChance: 0 },
-  difficile: { characterCount: 6, minCharacters: 5, maxCharacters: 6, statementsPerCharacter: 1, extraRules: 1, compositeChance: 0.3 },
-  expert: { characterCount: 8, minCharacters: 6, maxCharacters: 8, statementsPerCharacter: 1, extraRules: 2, compositeChance: 0.5 },
+  facile: { characterCount: 4, minCharacters: 3, maxCharacters: 4, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0 },
+  normal: { characterCount: 5, minCharacters: 4, maxCharacters: 5, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0 },
+  difficile: { characterCount: 6, minCharacters: 5, maxCharacters: 6, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.3 },
+  expert: { characterCount: 8, minCharacters: 6, maxCharacters: 8, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.5 },
 };
 
 export function characterRange(difficulty: Difficulty): { min: number; max: number } {

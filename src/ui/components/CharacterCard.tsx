@@ -75,15 +75,15 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
           ...(canPop ? { rotateX, rotateY, transformPerspective: 800 } : {}),
           ...(selected ? {} : { borderColor: `${colors.solid}66` }),
         }}
-        className={`group relative flex h-full w-full cursor-pointer flex-col rounded-card border-[3px] bg-surface p-1.5 text-left sm:p-2.5 transition-colors disabled:cursor-default ${
-          selected ? "border-primary shadow-[0_5px_0_#2358e8] sm:shadow-[0_8px_0_#2358e8]" : "border-ink/10 shadow-[0_4px_0_rgba(29,26,74,0.14)] sm:shadow-[0_6px_0_rgba(29,26,74,0.14)]"
+        className={`group relative flex h-full w-full cursor-pointer flex-col rounded-card border-2 bg-surface text-ink p-1.5 text-left sm:p-2.5 transition-colors disabled:cursor-default ${
+          selected ? "border-sun shadow-[0_0_0_2px_#d1a03a,0_8px_18px_rgba(0,0,0,0.55)]" : "border-ink/25 shadow-[0_4px_10px_rgba(0,0,0,0.45)]"
         }`}
       >
         {/* Portrait window */}
         <span className="relative block h-28 sm:h-44">
           <span
             className="absolute inset-0 block overflow-hidden"
-            style={{ borderRadius: "var(--radius-window)", background: `linear-gradient(165deg, ${colors.soft}, #ffffff 130%)` }}
+            style={{ borderRadius: "var(--radius-window)", background: `linear-gradient(165deg, ${colors.soft}, #d9c79c 130%)` }}
           >
             <span className="absolute -right-6 -top-8 block size-20 rounded-full opacity-25 sm:size-28" style={{ background: colors.solid }} />
             <span className="absolute -bottom-10 -left-8 block size-24 rounded-full opacity-15" style={{ background: colors.solid }} />
@@ -119,7 +119,7 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={motionTokens.spring.lively}
-              className="absolute -right-1.5 -top-1.5 grid size-7 sm:-right-2 sm:-top-2 sm:size-8 place-items-center rounded-full border-2 border-white bg-primary text-white"
+              className="absolute -right-1.5 -top-1.5 grid size-7 sm:-right-2 sm:-top-2 sm:size-8 place-items-center rounded-full border-2 border-surface bg-primary text-white"
             >
               <Check size={18} strokeWidth={3.5} aria-hidden />
               <span className="sr-only">Suspect choisi</span>
@@ -130,7 +130,7 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
               initial={{ scale: 2.2, opacity: 0, rotate: -24 }}
               animate={{ scale: 1, opacity: 1, rotate: -12 }}
               transition={motionTokens.spring.lively}
-              className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-lg border-[3px] border-danger bg-white/90 px-1.5 py-0.5 font-display text-sm font-extrabold text-danger sm:px-2 sm:text-lg"
+              className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-lg border-2 border-danger bg-surface/90 px-1.5 py-0.5 font-display text-sm font-extrabold text-danger sm:px-2 sm:text-lg"
             >
               <Ban size={18} strokeWidth={3} aria-hidden />
               Innocent
@@ -139,14 +139,14 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
         </span>
 
         <span className="mb-2 mt-2 block px-0.5 sm:mb-3 sm:mt-3 sm:px-1">
-          <span className="block truncate font-display text-lg font-extrabold leading-none sm:text-2xl">{character.name}</span>
+          <span className="block truncate font-display text-base font-bold leading-none tracking-wide sm:text-xl">{character.name}</span>
           <span className="mt-0.5 block text-xs font-semibold capitalize text-muted sm:mt-1 sm:text-[0.95rem]">{character.species}</span>
           <span className="mt-1.5 block sm:mt-2">
             <AlignmentBadge alignment={character.alignment} />
           </span>
         </span>
 
-        <span className="mt-auto flex gap-1.5 rounded-xl bg-bg p-2 text-[0.8rem] font-semibold leading-snug sm:gap-2 sm:rounded-2xl sm:p-3 sm:text-[0.95rem]">
+        <span className="mt-auto flex gap-1.5 rounded-md bg-inset p-2 text-[0.8rem] font-semibold leading-snug sm:gap-2 sm:rounded-lg sm:p-3 sm:text-[0.95rem]">
           <Quote className="mt-0.5 size-3.5 shrink-0 text-primary sm:size-4" aria-hidden />
           <span>{statement}</span>
         </span>

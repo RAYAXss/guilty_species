@@ -41,15 +41,15 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
         <button
           onClick={onQuit}
           aria-label="Quitter la manche"
-          className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-2xl border-[3px] border-ink/20 bg-white font-bold hover:border-ink sm:size-auto sm:px-4 sm:py-2"
+          className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-sun/50 bg-surface text-ink font-bold hover:border-sun sm:size-auto sm:px-4 sm:py-2"
         >
           <ArrowLeft size={18} aria-hidden />
           <span className="hidden sm:inline">Quitter la manche</span>
         </button>
         <h1 className="min-w-0 truncate text-center font-display text-base font-extrabold sm:text-2xl">
-          Niveau {difficulty} <span className="text-muted">· {puzzle.characters.length} créatures</span>
+          Niveau {difficulty} <span className="text-dim">· {puzzle.characters.length} créatures</span>
         </h1>
-        <div className="flex shrink-0 items-center gap-0.5 rounded-2xl bg-white px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
+        <div className="flex shrink-0 items-center gap-0.5 rounded-lg bg-surface text-ink px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
           {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
             <Heart
               key={i}
@@ -80,7 +80,7 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
         </ul>
       </section>
 
-      <div className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-20 flex items-center justify-between gap-2 rounded-2xl border-[3px] border-ink bg-white p-2 shadow-[0_4px_0_#1d1a4a] sm:bottom-4 sm:gap-3 sm:rounded-card sm:p-3 sm:shadow-[0_6px_0_#1d1a4a]">
+      <div className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-20 flex items-center justify-between gap-2 rounded-lg border-2 border-sun bg-surface text-ink p-2 shadow-[0_4px_0_#07050d] sm:bottom-4 sm:gap-3 sm:rounded-card sm:p-3 sm:shadow-[0_6px_0_#07050d]">
         <p className="flex min-w-0 flex-1 items-center gap-2 px-1 text-sm font-bold sm:px-2 sm:text-base" aria-live="polite">
           <MousePointerClick className="size-[18px] shrink-0 text-primary sm:size-5" aria-hidden />
           <span className="min-w-0 truncate">{selected ? `Suspect : ${selected.name}` : "Choisis un suspect."}</span>
@@ -88,7 +88,7 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
         <button
           onClick={accuse}
           disabled={!selected || !!feedback}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border-[3px] border-ink bg-primary px-3.5 py-1.5 font-display text-base font-bold text-white shadow-[0_4px_0_#1d1a4a] sm:gap-2 sm:rounded-2xl sm:px-6 sm:py-3 sm:text-xl sm:shadow-[0_5px_0_#1d1a4a] transition enabled:active:translate-y-1 enabled:active:shadow-[0_1px_0_#1d1a4a] disabled:cursor-not-allowed disabled:border-ink/20 disabled:bg-ink/10 disabled:text-muted disabled:shadow-none"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border-2 border-ink bg-primary px-3.5 py-1.5 font-display text-base font-bold text-white shadow-[0_4px_0_#07050d] sm:gap-2 sm:rounded-lg sm:px-6 sm:py-3 sm:text-xl sm:shadow-[0_5px_0_#07050d] transition enabled:active:translate-y-1 enabled:active:shadow-[0_1px_0_#07050d] disabled:cursor-not-allowed disabled:border-ink/20 disabled:bg-ink/10 disabled:text-muted disabled:shadow-none"
         >
           <Gavel size={20} aria-hidden />
           Accuser

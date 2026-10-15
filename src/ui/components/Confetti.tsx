@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "motion/react";
 
-const COLORS = ["#ffc83d", "#2358e8", "#1f9f74", "#e2591f", "#9a3fd0"];
+const COLORS = ["#d1a03a", "#f2e6c9", "#8f2d3c", "#2f8f6b", "#7e3fb5"];
 const COUNT = 28;
 
 /** One-shot victory burst. Deterministic layout, skipped with reduced motion. */
