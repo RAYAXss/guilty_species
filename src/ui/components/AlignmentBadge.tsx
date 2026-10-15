@@ -9,8 +9,8 @@ export function AlignmentBadge({ alignment }: { alignment: CharacterAlignment })
   const s = alignmentStyle[alignment];
   const Icon = icons[alignment];
   return (
-    <span className={`inline-flex items-center gap-1 border-2 px-2 py-0.5 text-sm font-bold ${s.bg} ${s.text} ${s.border} ${s.radius}`}>
-      <Icon size={15} strokeWidth={2.5} aria-hidden />
+    <span className={`inline-flex items-center gap-1 border-2 px-1.5 py-0.5 text-xs font-bold sm:px-2 sm:text-sm ${s.bg} ${s.text} ${s.border} ${s.radius}`}>
+      <Icon className="size-3.5 sm:size-4" strokeWidth={2.5} aria-hidden />
       {s.label}
     </span>
   );
