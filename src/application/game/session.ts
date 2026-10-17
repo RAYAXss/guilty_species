@@ -1,5 +1,6 @@
 import { clampCharacterCount } from "../../domain/generator/difficulty";
 import { generatePuzzle } from "../../domain/generator/generate";
+import { culpritCountsOf } from "../../domain/rules/rule";
 import type { Difficulty, Puzzle } from "../../domain/puzzle/types";
 
 export const DIFFICULTY_ORDER: readonly Difficulty[] = ["facile", "normal", "difficile", "expert"];
@@ -13,16 +14,17 @@ export function nextDifficulty(d: Difficulty): Difficulty {
 export interface Round {
   puzzle: Puzzle;
   /** Private to the application layer: the UI never reads it. */
-  culpritId: string;
+  culpritIds: string[];
   attemptsLeft: number;
   /** Characters proven innocent by a wrong accusation. */
   innocentIds: string[];
 }
 
 export type Feedback =
-  | { kind: "retry"; accusedId: string }
-  | { kind: "won"; culpritId: string }
-  | { kind: "lost"; culpritId: string };
+  /** `correctCount`: how many of the accused really are culprits (always 0 when there is a single culprit). */
+  | { kind: "retry"; accusedIds: string[]; correctCount: number }
+  | { kind: "won"; culpritIds: string[] }
+  | { kind: "lost"; culpritIds: string[] };
 
 export interface GameState {
   screen: "menu" | "playing";
@@ -38,7 +40,7 @@ export type GameAction =
   | { type: "setCharacterCount"; count: number }
   | { type: "setDifficulty"; difficulty: Difficulty }
   | { type: "start"; seed: number }
-  | { type: "accuse"; characterId: string }
+  | { type: "accuse"; characterIds: string[] }
   | { type: "dismissFeedback" }
   | { type: "quit" };
 
@@ -70,28 +72,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         seed: action.seed,
         characterCount: state.characterCount,
       });
-      const round: Round = { puzzle, culpritId: solution.culpritId, attemptsLeft: MAX_ATTEMPTS, innocentIds: [] };
+      const round: Round = { puzzle, culpritIds: solution.culpritIds, attemptsLeft: MAX_ATTEMPTS, innocentIds: [] };
       return { ...state, screen: "playing", round, feedback: null, lastResult: null };
     }
 
     case "accuse": {
       const { round } = state;
       if (state.screen !== "playing" || !round || state.feedback) return state;
-      if (round.innocentIds.includes(action.characterId)) return state;
-      if (!round.puzzle.characters.some((c) => c.id === action.characterId)) return state;
+      const ids = [...new Set(action.characterIds)];
+      if (!culpritCountsOf(round.puzzle.rules).includes(ids.length)) return state;
+      if (ids.some((id) => round.innocentIds.includes(id) || !round.puzzle.characters.some((c) => c.id === id))) return state;
 
-      if (action.characterId === round.culpritId) {
-        return { ...state, feedback: { kind: "won", culpritId: round.culpritId } };
+      const correctCount = ids.filter((id) => round.culpritIds.includes(id)).length;
+      if (ids.length === round.culpritIds.length && correctCount === ids.length) {
+        return { ...state, feedback: { kind: "won", culpritIds: round.culpritIds } };
       }
       const attemptsLeft = round.attemptsLeft - 1;
-      const next: Round = { ...round, attemptsLeft, innocentIds: [...round.innocentIds, action.characterId] };
+      // Accused characters are cleared only when none of them is a culprit.
+      const innocentIds = correctCount === 0 ? [...round.innocentIds, ...ids] : round.innocentIds;
+      const next: Round = { ...round, attemptsLeft, innocentIds };
       return {
         ...state,
         round: next,
         feedback:
           attemptsLeft > 0
-            ? { kind: "retry", accusedId: action.characterId }
-            : { kind: "lost", culpritId: round.culpritId },
+            ? { kind: "retry", accusedIds: ids, correctCount }
+            : { kind: "lost", culpritIds: round.culpritIds },
       };
     }
 

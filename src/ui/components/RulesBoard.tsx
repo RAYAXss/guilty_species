@@ -1,10 +1,14 @@
-import { Crosshair, MessageCircleQuestion, Scale, ScrollText, Users } from "lucide-react";
+import { Crosshair, MessageCircleQuestion, Scale, ScrollText, UserSearch, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { renderRule, type Rule } from "../../domain/rules/rule";
 import { motionTokens } from "../tokens/motion";
 
 const icons = {
   truthCount: Scale,
+  liarCount: Scale,
+  truthCountOneOf: Scale,
+  liarCountOneOf: Scale,
+  culpritCount: UserSearch,
   alignmentTruth: Users,
   culpritAlignment: Crosshair,
   culpritTruth: MessageCircleQuestion,

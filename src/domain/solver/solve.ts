@@ -1,41 +1,76 @@
 import type { Puzzle, Solution } from "../puzzle/types";
-import { evaluatePredicate } from "../statements/predicate";
-import { evaluateRule } from "../rules/rule";
+import { evaluatePredicate, type LogicalPredicate } from "../statements/predicate";
+import { culpritCountsOf, evaluateRule } from "../rules/rule";
 
 export const MAX_SOLVABLE_CHARACTERS = 14;
+
+const popcount = (n: number) => {
+  let c = 0;
+  for (let x = n; x; x &= x - 1) c++;
+  return c;
+};
+
+const mentionsTruth = (p: LogicalPredicate): boolean => {
+  switch (p.type) {
+    case "characterTruth":
+      return true;
+    case "not":
+      return mentionsTruth(p.operand);
+    case "and":
+    case "or":
+      return p.operands.some(mentionsTruth);
+    default:
+      return false;
+  }
+};
 
 /**
  * Exhaustive solver, independent from the generator. It only looks at the Puzzle
  * (what the player sees) and returns every consistent world.
  *
  * A world is consistent when:
+ *  - the number of culprits is allowed (one, unless a culpritCount rule says otherwise);
  *  - each character tells the truth  <=>  all of their statements hold;
  *  - every global rule holds.
+ *
+ * `limit` stops the search early (uniqueness checks only need to know about a 2nd solution).
  */
-export function solve(puzzle: Puzzle): Solution[] {
+export function solve(puzzle: Puzzle, limit = Infinity): Solution[] {
   const { characters, statements, rules } = puzzle;
   const n = characters.length;
   if (n > MAX_SOLVABLE_CHARACTERS) {
     throw new Error(`Solver supports at most ${MAX_SOLVABLE_CHARACTERS} characters`);
   }
-  const solutions: Solution[] = [];
+  const allowedCounts = culpritCountsOf(rules);
+  const culpritMasks: number[] = [];
+  for (let m = 1; m < 1 << n; m++) if (allowedCounts.includes(popcount(m))) culpritMasks.push(m);
 
-  for (let mask = 0; mask < 1 << n; mask++) {
+  // A character whose statements never mention anyone's truthfulness is fully decided by the culprits:
+  // only the others ("free") need their truth value enumerated.
+  const spoken = characters.map((c) => statements.filter((s) => s.characterId === c.id));
+  const free = characters.map((_, i) => i).filter((i) => spoken[i]!.some((s) => mentionsTruth(s.predicate)));
+
+  const solutions: Solution[] = [];
+  for (const cm of culpritMasks) {
+    const culpritIds = characters.filter((_, i) => (cm & (1 << i)) !== 0).map((c) => c.id);
     const assignments: Record<string, boolean> = {};
+    // Fixed characters first: their statements do not read `assignments`.
+    const base: Solution = { culpritIds, assignments };
     characters.forEach((c, i) => {
-      assignments[c.id] = (mask & (1 << i)) !== 0;
+      if (!free.includes(i)) assignments[c.id] = spoken[i]!.every((s) => evaluatePredicate(s.predicate, characters, base));
     });
 
-    for (const culprit of characters) {
-      const world: Solution = { culpritId: culprit.id, assignments };
-      const statementsConsistent = characters.every((c) => {
-        const allHold = statements
-          .filter((s) => s.characterId === c.id)
-          .every((s) => evaluatePredicate(s.predicate, characters, world));
-        return allHold === assignments[c.id];
+    for (let fm = 0; fm < 1 << free.length; fm++) {
+      free.forEach((ci, k) => {
+        assignments[characters[ci]!.id] = (fm & (1 << k)) !== 0;
       });
-      if (statementsConsistent && rules.every((r) => evaluateRule(r, characters, world))) {
-        solutions.push({ culpritId: culprit.id, assignments: { ...assignments } });
+      const world: Solution = { culpritIds, assignments };
+      const consistent = free.every(
+        (ci) => spoken[ci]!.every((s) => evaluatePredicate(s.predicate, characters, world)) === assignments[characters[ci]!.id],
+      );
+      if (consistent && rules.every((r) => evaluateRule(r, characters, world))) {
+        solutions.push({ culpritIds, assignments: { ...assignments } });
+        if (solutions.length >= limit) return solutions;
       }
     }
   }
@@ -43,10 +78,10 @@ export function solve(puzzle: Puzzle): Solution[] {
 }
 
 export function hasUniqueSolution(puzzle: Puzzle): boolean {
-  return solve(puzzle).length === 1;
+  return solve(puzzle, 2).length === 1;
 }
 
-/** "Qui peut être le coupable ?" */
+/** "Qui peut être coupable ?" */
 export function possibleCulprits(puzzle: Puzzle): string[] {
-  return [...new Set(solve(puzzle).map((s) => s.culpritId))];
+  return [...new Set(solve(puzzle).flatMap((s) => s.culpritIds))];
 }

@@ -1,33 +1,50 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { ArrowLeft, Gavel, Heart, MousePointerClick } from "lucide-react";
+import { ArrowLeft, Gavel, Heart, Map as MapIcon, MousePointerClick } from "lucide-react";
 import { MAX_ATTEMPTS, nextDifficulty, type GameState } from "../../application/game/session";
 import { CharacterCard, type CardState } from "../components/CharacterCard";
+import { MapDialog } from "../components/MapDialog";
 import { ResultDialog } from "../components/ResultDialog";
 import { RulesBoard } from "../components/RulesBoard";
+import { culpritCountsOf } from "../../domain/rules/rule";
 import { motionTokens } from "../tokens/motion";
 
 interface Props {
   state: GameState;
-  onAccuse: (id: string) => void;
+  onAccuse: (ids: string[]) => void;
   onDismissFeedback: () => void;
   onQuit: () => void;
 }
 
 export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props) {
   const { round, feedback, difficulty } = state;
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [mapOpen, setMapOpen] = useState(false);
   if (!round) return null;
 
   const { puzzle, innocentIds, attemptsLeft } = round;
-  const selected = puzzle.characters.find((c) => c.id === selectedId);
-  const stateOf = (id: string): CardState => (innocentIds.includes(id) ? "innocent" : id === selectedId ? "selected" : "idle");
+  const allowedCounts = culpritCountsOf(puzzle.rules);
+  const maxSuspects = Math.max(...allowedCounts);
+  const selected = puzzle.characters.filter((c) => selectedIds.includes(c.id));
+  const canAccuse = allowedCounts.includes(selected.length);
+  const stateOf = (id: string): CardState => (innocentIds.includes(id) ? "innocent" : selectedIds.includes(id) ? "selected" : "idle");
+
+  // Toggle; when the limit is reached the oldest pick makes room for the new one.
+  const toggle = (id: string) =>
+    setSelectedIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id].slice(-maxSuspects)));
 
   const accuse = () => {
-    if (!selected) return;
-    onAccuse(selected.id);
-    setSelectedId(null);
+    if (!canAccuse) return;
+    onAccuse(selected.map((c) => c.id));
+    setSelectedIds([]);
   };
+
+  const prompt =
+    selected.length === 0
+      ? maxSuspects > 1
+        ? `Choisis ${allowedCounts.join(" ou ")} suspects.`
+        : "Choisis un suspect."
+      : `${selected.length > 1 ? "Suspects" : "Suspect"} : ${selected.map((c) => c.name).join(", ")}`;
 
   return (
     <motion.main
@@ -49,6 +66,15 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
         <h1 className="min-w-0 truncate text-center font-display text-base font-extrabold sm:text-2xl">
           Niveau {difficulty} <span className="text-dim">· {puzzle.characters.length} créatures</span>
         </h1>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <button
+          onClick={() => setMapOpen(true)}
+          aria-label="Ouvrir la carte de Fantolia"
+          className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-sun/50 bg-surface text-ink font-bold hover:border-sun sm:size-auto sm:px-4 sm:py-2"
+        >
+          <MapIcon size={18} aria-hidden />
+          <span className="hidden sm:inline">Carte</span>
+        </button>
         <div className="flex shrink-0 items-center gap-0.5 rounded-lg bg-surface text-ink px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
           {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
             <Heart
@@ -60,6 +86,7 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
           <span className="ml-1 hidden sm:inline">
             {attemptsLeft} essai{attemptsLeft > 1 ? "s" : ""}
           </span>
+        </div>
         </div>
       </header>
 
@@ -74,7 +101,7 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
               character={c}
               statement={puzzle.statements.filter((s) => s.characterId === c.id).map((s) => s.text).join(" ")}
               state={stateOf(c.id)}
-              onSelect={(id) => setSelectedId((cur) => (cur === id ? null : id))}
+              onSelect={toggle}
             />
           ))}
         </ul>
@@ -83,17 +110,19 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
       <div className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-20 flex items-center justify-between gap-2 rounded-lg border-2 border-sun bg-surface text-ink p-2 shadow-[0_4px_0_#07050d] sm:bottom-4 sm:gap-3 sm:rounded-card sm:p-3 sm:shadow-[0_6px_0_#07050d]">
         <p className="flex min-w-0 flex-1 items-center gap-2 px-1 text-sm font-bold sm:px-2 sm:text-base" aria-live="polite">
           <MousePointerClick className="size-[18px] shrink-0 text-primary sm:size-5" aria-hidden />
-          <span className="min-w-0 truncate">{selected ? `Suspect : ${selected.name}` : "Choisis un suspect."}</span>
+          <span className="min-w-0 truncate">{prompt}</span>
         </p>
         <button
           onClick={accuse}
-          disabled={!selected || !!feedback}
+          disabled={!canAccuse || !!feedback}
           className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border-2 border-ink bg-primary px-3.5 py-1.5 font-display text-base font-bold text-white shadow-[0_4px_0_#07050d] sm:gap-2 sm:rounded-lg sm:px-6 sm:py-3 sm:text-xl sm:shadow-[0_5px_0_#07050d] transition enabled:active:translate-y-1 enabled:active:shadow-[0_1px_0_#07050d] disabled:cursor-not-allowed disabled:border-ink/20 disabled:bg-ink/10 disabled:text-muted disabled:shadow-none"
         >
           <Gavel size={20} aria-hidden />
           Accuser
         </button>
       </div>
+
+      {mapOpen && <MapDialog characters={puzzle.characters} onClose={() => setMapOpen(false)} />}
 
       {feedback && (
         <ResultDialog

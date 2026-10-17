@@ -16,7 +16,7 @@ interface Props {
 
 const HERO = [
   { id: "elara", say: "Varek ment, j'en suis sûre.", tilt: -6 },
-  { id: "gorak", say: "Le coupable n'est pas un pacifiste.", tilt: 0 },
+  { id: "gorak", say: "Un de mes voisins est coupable.", tilt: 0 },
   { id: "varek", say: "Gorak dit la vérité.", tilt: 6 },
 ].map((h) => ({ ...h, character: CHARACTER_CATALOG.find((c) => c.id === h.id)! }));
 
