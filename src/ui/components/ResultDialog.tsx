@@ -18,27 +18,35 @@ interface Props {
 
 export function ResultDialog({ feedback, characters, difficulty, nextDifficulty, onContinue }: Props) {
   const find = (id: string) => characters.find((c) => c.id === id);
-  const culprit = feedback.kind === "retry" ? undefined : find(feedback.culpritId);
-  const accused = feedback.kind === "retry" ? find(feedback.accusedId) : undefined;
+  const culprits = feedback.kind === "retry" ? [] : feedback.culpritIds.map(find).filter((c): c is Character => !!c);
+  const accused = feedback.kind === "retry" ? feedback.accusedIds.map(find).filter((c): c is Character => !!c) : [];
+  const culpritNames = culprits.map((c) => c.name).join(" et ");
+  const accusedNames = accused.map((c) => c.name).join(" et ");
+  const retryBody =
+    feedback.kind !== "retry"
+      ? ""
+      : feedback.correctCount === 0
+        ? `${accusedNames || "Ce suspect"} ${accused.length > 1 ? "sont innocents" : "est innocent"}. Il te reste un dernier essai.`
+        : `${feedback.correctCount} suspect${feedback.correctCount > 1 ? "s" : ""} sur ${accused.length} ${feedback.correctCount > 1 ? "sont" : "est"} bien coupable${feedback.correctCount > 1 ? "s" : ""}. Il te reste un dernier essai.`;
 
   const copy = {
     retry: {
-      title: "Cette créature est innocente.",
-      body: `${accused?.name ?? "Ce suspect"} n'est pas le coupable. Il te reste un dernier essai.`,
+      title: feedback.kind === "retry" && feedback.correctCount > 0 ? "Une contradiction subsiste." : accused.length > 1 ? "Ces créatures sont innocentes." : "Cette créature est innocente.",
+      body: retryBody,
       cta: "Reprendre l'enquête",
       Icon: Search,
       accent: "bg-sun",
     },
     won: {
-      title: "Coupable démasqué !",
-      body: `C'était bien ${culprit?.name}. Niveau suivant : ${nextDifficulty}.`,
+      title: culprits.length > 1 ? "Coupables démasqués !" : "Coupable démasqué !",
+      body: `C'était bien ${culpritNames}. Niveau suivant : ${nextDifficulty}.`,
       cta: "Retour au menu",
       Icon: ArrowRight,
       accent: "bg-pacifiste-soft",
     },
     lost: {
       title: "Manche perdue",
-      body: `Le coupable était ${culprit?.name}. Tu retentes au niveau ${difficulty}.`,
+      body: `${culprits.length > 1 ? "Les coupables étaient" : "Le coupable était"} ${culpritNames}. Tu retentes au niveau ${difficulty}.`,
       cta: "Retour au menu",
       Icon: RotateCcw,
       accent: "bg-belliqueux-soft",
@@ -63,15 +71,20 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
         className="relative w-full max-w-md rounded-card border-2 border-sun bg-surface text-ink p-4 text-center sm:p-6 shadow-[0_8px_0_#07050d]"
       >
         {feedback.kind === "won" && <Confetti />}
-        {culprit && (
-          <motion.div
-            initial={{ y: 40, scale: 0.7 }}
-            animate={{ y: 0, scale: 1 }}
-            transition={motionTokens.spring.lively}
-            className={`mx-auto -mt-2 mb-3 w-28 sm:w-40 overflow-hidden rounded-xl border-2 border-ink ${copy.accent}`}
-          >
-            <Portrait species={culprit.species} alignment={culprit.alignment} name={culprit.name} src={portraitSrc(culprit)} className="block w-full" />
-          </motion.div>
+        {culprits.length > 0 && (
+          <div className="mx-auto -mt-2 mb-3 flex justify-center gap-2">
+            {culprits.map((culprit) => (
+              <motion.div
+                key={culprit.id}
+                initial={{ y: 40, scale: 0.7 }}
+                animate={{ y: 0, scale: 1 }}
+                transition={motionTokens.spring.lively}
+                className={`${culprits.length > 1 ? "w-24 sm:w-32" : "w-28 sm:w-40"} overflow-hidden rounded-xl border-2 border-ink ${copy.accent}`}
+              >
+                <Portrait species={culprit.species} alignment={culprit.alignment} name={culprit.name} src={portraitSrc(culprit)} className="block w-full" />
+              </motion.div>
+            ))}
+          </div>
         )}
         <h2 id="result-title" className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
           {copy.title}

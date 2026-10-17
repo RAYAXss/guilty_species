@@ -11,7 +11,7 @@ export function useGame() {
     setCharacterCount: useCallback((count: number) => dispatch({ type: "setCharacterCount", count }), []),
     setDifficulty: useCallback((difficulty: Difficulty) => dispatch({ type: "setDifficulty", difficulty }), []),
     start: useCallback(() => dispatch({ type: "start", seed: randomSeed() }), []),
-    accuse: useCallback((characterId: string) => dispatch({ type: "accuse", characterId }), []),
+    accuse: useCallback((characterIds: string[]) => dispatch({ type: "accuse", characterIds }), []),
     dismissFeedback: useCallback(() => dispatch({ type: "dismissFeedback" }), []),
     quit: useCallback(() => dispatch({ type: "quit" }), []),
   };
