@@ -1,5 +1,22 @@
-import type { Character } from "../characters/types";
+import type { Character, CharacterAlignment } from "../characters/types";
 import { findCharacter, type LogicalPredicate } from "./predicate";
+
+export interface RenderContext {
+  /** When the speaker talks about themselves ("mes voisins"). */
+  speakerId?: string;
+  /** More than one culprit is possible: "Au moins un coupable…" instead of "Le coupable…". */
+  multiCulprit?: boolean;
+}
+
+/**
+ * Alignment words (pacifiste, belliqueux, vengeur) stay on the cards and rules:
+ * characters never say them. They describe the culprit's temperament instead.
+ */
+const TRAIT: Record<CharacterAlignment, string> = {
+  pacifiste: "d'un naturel paisible",
+  belliqueux: "d'un tempérament guerrier",
+  vengeur: "animé par la vengeance",
+};
 
 /** Builds the player-facing French text from the predicate (never the reverse). */
 export function renderPredicate(p: LogicalPredicate, characters: readonly Character[], speakerId?: string): string {
@@ -9,6 +26,7 @@ export function renderPredicate(p: LogicalPredicate, characters: readonly Charac
     case "characterTruth":
       return p.expected ? `${name(p.characterId)} dit la vérité` : `${name(p.characterId)} ment`;
     case "culpritIs":
+      if (multi) return p.expected ? `${name(p.characterId)} est coupable` : `${name(p.characterId)} n'est pas coupable`;
       return p.expected ? `Le coupable est ${name(p.characterId)}` : `Le coupable n'est pas ${name(p.characterId)}`;
     case "culpritAlignment":
       return p.expected ? `Le coupable est ${p.alignment}` : `Le coupable n'est pas ${p.alignment}`;

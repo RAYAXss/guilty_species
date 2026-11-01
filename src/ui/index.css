@@ -1,38 +1,42 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #e9efff;
-  --color-surface: #ffffff;
-  --color-ink: #1d1a4a;
-  --color-muted: #55528a;
-  --color-primary: #2358e8;
-  --color-sun: #ffc83d;
-  --color-success: #178a62;
-  --color-danger: #d9363e;
-  --color-pacifiste: #1f9f74;
-  --color-pacifiste-soft: #c9f3e2;
-  --color-belliqueux: #e2591f;
-  --color-belliqueux-soft: #ffd9c4;
-  --color-vengeur: #9a3fd0;
-  --color-vengeur-soft: #ecd2fb;
-  --radius-card: 1.5rem;
-  --radius-window: 1rem;
-  --font-display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
-  --font-body: "Nunito", system-ui, sans-serif;
+  /* Night sky behind, parchment panels in front, gold for structure. */
+  --color-bg: #120f1c;
+  --color-surface: #f2e6c9;
+  --color-inset: #e4d3ab;
+  --color-ink: #1f1830;
+  --color-muted: #6a5b4d;
+  --color-dim: #b3a9cc;
+  --color-primary: #8f2d3c;
+  --color-sun: #d1a03a;
+  --color-success: #2f7d5b;
+  --color-danger: #b3262f;
+  --color-pacifiste: #2f8f6b;
+  --color-pacifiste-soft: #cfe3cb;
+  --color-belliqueux: #c4501f;
+  --color-belliqueux-soft: #efcdb0;
+  --color-vengeur: #7e3fb5;
+  --color-vengeur-soft: #dbc8ee;
+  --radius-card: 0.9rem;
+  --radius-window: 0.75rem;
+  --font-display: "Cinzel", Georgia, "Times New Roman", serif;
+  --font-body: "Alegreya Sans", system-ui, sans-serif;
 }
 
 html, body, #root { min-height: 100%; }
 body {
   margin: 0;
   font-family: var(--font-body);
-  color: var(--color-ink);
+  font-size: 1.05rem;
+  color: var(--color-surface);
   background:
-    radial-gradient(60rem 30rem at 10% -10%, #d7e3ff 0%, transparent 60%),
-    radial-gradient(50rem 30rem at 100% 0%, #f3dcff 0%, transparent 55%),
+    radial-gradient(60rem 30rem at 12% -10%, #2d2154 0%, transparent 60%),
+    radial-gradient(50rem 30rem at 100% 0%, #43192f 0%, transparent 55%),
     var(--color-bg);
   background-attachment: fixed;
 }
-:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--color-sun); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

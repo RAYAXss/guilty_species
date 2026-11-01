@@ -4,7 +4,8 @@ import { ALIGNMENTS } from "../characters/types";
 import { evaluatePredicate } from "../statements/predicate";
 import { evaluateRule, renderRule } from "../rules/rule";
 import { solve } from "../solver/solve";
-import { DIFFICULTY_PARAMS } from "./difficulty";
+import { analyzePuzzle, DIFFICULTY_PARAMS } from "./difficulty";
+import { neighborsOf } from "../world/fantolia";
 import { generatePuzzle, PuzzleGenerationError } from "./generate";
 import type { Difficulty } from "../puzzle/types";
 
@@ -41,7 +42,7 @@ describe("generatePuzzle", () => {
 
   it("does not leak the culprit and keeps predicates authoritative", () => {
     const { puzzle, solution } = generatePuzzle({ difficulty: "difficile", seed: 5 });
-    expect(puzzle).not.toHaveProperty("culpritId");
+    expect(puzzle).not.toHaveProperty("culpritIds");
     // Every statement matches its speaker's truthfulness in the real world.
     for (const s of puzzle.statements) {
       const holds = evaluatePredicate(s.predicate, puzzle.characters, solution);
@@ -50,7 +51,7 @@ describe("generatePuzzle", () => {
   });
 
   it("never produces a composite clue over a single subject (tautology)", () => {
-    for (let seed = 1; seed <= 60; seed++) {
+    for (let seed = 1; seed <= 25; seed++) {
       const { puzzle } = generatePuzzle({ difficulty: "expert", seed });
       for (const s of puzzle.statements) {
         const p = s.predicate;

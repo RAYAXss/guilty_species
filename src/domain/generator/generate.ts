@@ -5,10 +5,11 @@ import { evaluatePredicate, type LogicalPredicate } from "../statements/predicat
 import { renderStatement } from "../statements/render";
 import { neighborsOf } from "../world/fantolia";
 import { evaluateRule, type Rule } from "../rules/rule";
+import { neighborsOf } from "../world/fantolia";
 import { solve } from "../solver/solve";
 import { createRng, pickOne, randomInt, shuffle, type Rng } from "../../infrastructure/random/rng";
 import { weightedSample } from "../../infrastructure/random/weighted";
-import { DIFFICULTY_PARAMS, type DifficultyParams } from "./difficulty";
+import { analyzePuzzle, DIFFICULTY_PARAMS, type DifficultyParams } from "./difficulty";
 
 export interface GenerateOptions {
   difficulty: Difficulty;
@@ -30,7 +31,7 @@ export interface GeneratedPuzzle {
 export class PuzzleGenerationError extends Error {}
 
 export function generatePuzzle(options: GenerateOptions): GeneratedPuzzle {
-  const { difficulty, seed, catalog = CHARACTER_CATALOG, maxAttempts = 500 } = options;
+  const { difficulty, seed, catalog = CHARACTER_CATALOG, maxAttempts = 3000 } = options;
   const params: DifficultyParams = {
     ...DIFFICULTY_PARAMS[difficulty],
     ...(options.characterCount !== undefined && { characterCount: options.characterCount }),
@@ -57,24 +58,59 @@ export function generatePuzzle(options: GenerateOptions): GeneratedPuzzle {
 function tryBuild(rng: Rng, params: DifficultyParams, catalog: readonly Character[]) {
   const characters = weightedSample(rng, catalog, params.characterCount);
 
-  // Culprit + truth assignment (the "world").
-  const culprit = pickOne(rng, characters);
+  // Culprit(s) + truth assignment (the "world").
+  const culpritCounts = pickOne(rng, params.culpritCountChoices);
+  const culpritCount = Math.min(pickOne(rng, culpritCounts), characters.length - 1);
+  const culpritSet = new Set(shuffle(rng, characters).slice(0, culpritCount).map((c) => c.id));
+  const culpritIds = characters.filter((c) => culpritSet.has(c.id)).map((c) => c.id);
   const truthCount = randomInt(rng, 1, characters.length - 1);
   const truthful = new Set(shuffle(rng, characters).slice(0, truthCount).map((c) => c.id));
   const assignments: Record<string, boolean> = {};
   for (const c of characters) assignments[c.id] = truthful.has(c.id);
-  const world: Solution = { culpritId: culprit.id, assignments };
+  const world: Solution = { culpritIds, assignments };
 
-  const rules = buildRules(rng, params, characters, world, truthCount);
-  const statements = buildStatements(rng, params, characters, world);
+  const rules = buildRules(rng, params, characters, world, truthCount, culpritCounts);
+  const statements = buildStatements(rng, params, characters, world, culpritCounts.some((n) => n > 1));
   if (!statements) return null;
   return { characters, world, rules, statements };
 }
 
-function buildRules(rng: Rng, params: DifficultyParams, characters: Character[], world: Solution, truthCount: number): Rule[] {
-  const rules: Rule[] = [{ type: "truthCount", count: truthCount }];
+/** The mandatory "how many tell the truth / lie" rule, as an exact count or a "1 ou 2" range. */
+function buildCountRule(rng: Rng, params: DifficultyParams, total: number, truthCount: number): Rule {
+  const kind = pickOne(rng, params.countRules);
+  const liarCount = total - truthCount;
+  // A second possible value next to the real one, kept inside [1, total - 1].
+  const range = (real: number): number[] => {
+    const others = [real - 1, real + 1].filter((v) => v >= 1 && v <= total - 1);
+    return [real, pickOne(rng, others)].sort((a, b) => a - b);
+  };
+  switch (kind) {
+    case "truthCount":
+      return { type: "truthCount", count: truthCount };
+    case "liarCount":
+      return { type: "liarCount", count: liarCount };
+    case "truthCountOneOf":
+      return { type: "truthCountOneOf", counts: range(truthCount) };
+    case "liarCountOneOf":
+      return { type: "liarCountOneOf", counts: range(liarCount) };
+  }
+}
+
+function buildRules(
+  rng: Rng,
+  params: DifficultyParams,
+  characters: Character[],
+  world: Solution,
+  truthCount: number,
+  culpritCounts: readonly number[],
+): Rule[] {
+  const rules: Rule[] = [buildCountRule(rng, params, characters.length, truthCount)];
+  // Several culprits are announced; a single culprit is the default and needs no rule.
+  if (!(culpritCounts.length === 1 && culpritCounts[0] === 1)) {
+    rules.push({ type: "culpritCount", counts: [...culpritCounts] });
+  }
   const options: Rule[] = [
-    { type: "culpritTruth", truthful: world.assignments[world.culpritId] === true },
+    { type: "culpritTruth", truthful: world.culpritIds.every((id) => world.assignments[id] === true) },
     ...ALIGNMENTS.flatMap<Rule>((alignment) => [
       { type: "culpritAlignment", alignment },
       { type: "alignmentTruth", alignment, quantifier: "all", truthful: true },
@@ -95,6 +131,8 @@ function buildRules(rng: Rng, params: DifficultyParams, characters: Character[],
 
 function atomicCandidates(characters: Character[], speakerId: string): LogicalPredicate[] {
   const others = characters.filter((c) => c.id !== speakerId);
+  // "Voisin" clues only make sense for someone who has at least one neighbor in this puzzle.
+  const withNeighbors = characters.filter((c) => neighborsOf(characters, c.id).length > 0);
   return [
     ...others.flatMap<LogicalPredicate>((c) => [
       { type: "characterTruth", characterId: c.id, expected: true },
@@ -108,8 +146,9 @@ function atomicCandidates(characters: Character[], speakerId: string): LogicalPr
       { type: "culpritAlignment", alignment, expected: true },
       { type: "culpritAlignment", alignment, expected: false },
     ]),
-    ...[...new Set(characters.map((c) => c.species))].flatMap<LogicalPredicate>((species) => [
-      { type: "culpritSpecies", species, expected: false },
+    ...withNeighbors.flatMap<LogicalPredicate>((c) => [
+      { type: "culpritNeighborOf", characterId: c.id, expected: true },
+      { type: "culpritNeighborOf", characterId: c.id, expected: false },
     ]),
     ...characters.flatMap<LogicalPredicate>((c) =>
       neighborsOf(characters, c.id).length > 0
@@ -122,7 +161,7 @@ function atomicCandidates(characters: Character[], speakerId: string): LogicalPr
   ];
 }
 
-function buildStatements(rng: Rng, params: DifficultyParams, characters: Character[], world: Solution): Statement[] | null {
+function buildStatements(rng: Rng, params: DifficultyParams, characters: Character[], world: Solution, multiCulprit: boolean): Statement[] | null {
   const statements: Statement[] = [];
   for (const speaker of characters) {
     const tellsTruth = world.assignments[speaker.id] === true;

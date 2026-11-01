@@ -2,7 +2,10 @@ import type { Character, CharacterAlignment } from "../characters/types";
 import type { Solution } from "../puzzle/types";
 import { neighborsOf } from "../world/fantolia";
 
-/** Logical meaning of a statement. Composable. */
+/**
+ * Logical meaning of a statement. Composable.
+ * With several culprits, "culprit" predicates mean "at least one culprit" (and `expected: false` means "none").
+ */
 export type LogicalPredicate =
   | { type: "characterTruth"; characterId: string; expected: boolean }
   | { type: "culpritIs"; characterId: string; expected: boolean }
@@ -29,7 +32,7 @@ export function evaluatePredicate(
     case "characterTruth":
       return (world.assignments[predicate.characterId] === true) === predicate.expected;
     case "culpritIs":
-      return (world.culpritId === predicate.characterId) === predicate.expected;
+      return world.culpritIds.includes(predicate.characterId) === predicate.expected;
     case "culpritAlignment":
       return (findCharacter(characters, world.culpritId).alignment === predicate.alignment) === predicate.expected;
     case "culpritSpecies":

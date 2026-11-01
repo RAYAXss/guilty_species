@@ -22,9 +22,10 @@ export interface Puzzle {
   rules: Rule[];
 }
 
-/** One possible state of the world: a culprit + who tells the truth. */
+/** One possible state of the world: the culprit(s) + who tells the truth. */
 export interface Solution {
-  culpritId: string;
+  /** In the order of `puzzle.characters`. */
+  culpritIds: string[];
   /** characterId -> tells the truth */
   assignments: Record<string, boolean>;
 }

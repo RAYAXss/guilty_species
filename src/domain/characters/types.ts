@@ -1,3 +1,5 @@
+import type { RegionId } from "../world/fantolia";
+
 export const ALIGNMENTS = ["pacifiste", "belliqueux", "vengeur"] as const;
 export type CharacterAlignment = (typeof ALIGNMENTS)[number];
 
