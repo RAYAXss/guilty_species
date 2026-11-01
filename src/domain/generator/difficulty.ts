@@ -12,13 +12,17 @@ export interface DifficultyParams {
   extraRules: number;
   /** Probability that a statement is a composite (and / or / not). */
   compositeChance: number;
+  /** Minimum suspects the rules alone must leave (ignoring statements). */
+  minRulesOnlySuspects: number;
+  /** Maximum allowed redundant clues (statements + extra rules). 0 = every clue is needed. */
+  maxRedundantClues: number;
 }
 
 export const DIFFICULTY_PARAMS: Record<Difficulty, DifficultyParams> = {
-  facile: { characterCount: 4, minCharacters: 3, maxCharacters: 4, statementsPerCharacter: 1, extraRules: 1, compositeChance: 0 },
-  normal: { characterCount: 5, minCharacters: 4, maxCharacters: 5, statementsPerCharacter: 1, extraRules: 1, compositeChance: 0 },
-  difficile: { characterCount: 6, minCharacters: 5, maxCharacters: 6, statementsPerCharacter: 1, extraRules: 1, compositeChance: 0.3 },
-  expert: { characterCount: 8, minCharacters: 6, maxCharacters: 8, statementsPerCharacter: 1, extraRules: 2, compositeChance: 0.5 },
+  facile: { characterCount: 4, minCharacters: 3, maxCharacters: 4, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0, minRulesOnlySuspects: 2, maxRedundantClues: Infinity },
+  normal: { characterCount: 5, minCharacters: 4, maxCharacters: 5, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0, minRulesOnlySuspects: 2, maxRedundantClues: Infinity },
+  difficile: { characterCount: 6, minCharacters: 5, maxCharacters: 6, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.3, minRulesOnlySuspects: 2, maxRedundantClues: 2 },
+  expert: { characterCount: 8, minCharacters: 6, maxCharacters: 8, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.5, minRulesOnlySuspects: 2, maxRedundantClues: 4 },
 };
 
 export function characterRange(difficulty: Difficulty): { min: number; max: number } {

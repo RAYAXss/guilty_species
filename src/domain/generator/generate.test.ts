@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CHARACTER_CATALOG } from "../characters/catalog";
 import { ALIGNMENTS } from "../characters/types";
 import { evaluatePredicate } from "../statements/predicate";
-import { renderRule } from "../rules/rule";
+import { evaluateRule, renderRule } from "../rules/rule";
 import { solve } from "../solver/solve";
 import { DIFFICULTY_PARAMS } from "./difficulty";
 import { generatePuzzle, PuzzleGenerationError } from "./generate";
@@ -58,6 +58,26 @@ describe("generatePuzzle", () => {
           const [x, y] = p.operands as [typeof p, typeof p];
           expect(JSON.stringify({ ...x, expected: 0 })).not.toBe(JSON.stringify({ ...y, expected: 0 }));
         }
+      }
+    }
+  });
+
+  it.each(difficulties)("rejects trivially-solvable puzzles at min and max character counts (%s)", (difficulty) => {
+    const params = DIFFICULTY_PARAMS[difficulty];
+    for (const count of [params.minCharacters, params.maxCharacters]) {
+      for (let seed = 1; seed <= 10; seed++) {
+        const { puzzle } = generatePuzzle({ difficulty, seed, characterCount: count });
+        // Rules alone must leave at least minRulesOnlySuspects culprit candidates.
+        const { characters, rules } = puzzle;
+        let suspects = 0;
+        for (const culprit of characters) {
+          for (let mask = 0; mask < 1 << characters.length; mask++) {
+            const assignments: Record<string, boolean> = {};
+            characters.forEach((c, i) => { assignments[c.id] = (mask & (1 << i)) !== 0; });
+            if (rules.every((r) => evaluateRule(r, characters, { culpritId: culprit.id, assignments }))) { suspects++; break; }
+          }
+        }
+        expect(suspects).toBeGreaterThanOrEqual(params.minRulesOnlySuspects);
       }
     }
   });

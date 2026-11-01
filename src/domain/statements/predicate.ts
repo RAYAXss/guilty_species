@@ -1,5 +1,6 @@
 import type { Character, CharacterAlignment } from "../characters/types";
 import type { Solution } from "../puzzle/types";
+import { neighborsOf } from "../world/fantolia";
 
 /** Logical meaning of a statement. Composable. */
 export type LogicalPredicate =
@@ -7,6 +8,7 @@ export type LogicalPredicate =
   | { type: "culpritIs"; characterId: string; expected: boolean }
   | { type: "culpritAlignment"; alignment: CharacterAlignment; expected: boolean }
   | { type: "culpritSpecies"; species: string; expected: boolean }
+  | { type: "culpritNeighborOf"; characterId: string; expected: boolean }
   | { type: "not"; operand: LogicalPredicate }
   | { type: "and"; operands: LogicalPredicate[] }
   | { type: "or"; operands: LogicalPredicate[] };
@@ -32,6 +34,8 @@ export function evaluatePredicate(
       return (findCharacter(characters, world.culpritId).alignment === predicate.alignment) === predicate.expected;
     case "culpritSpecies":
       return (findCharacter(characters, world.culpritId).species === predicate.species) === predicate.expected;
+    case "culpritNeighborOf":
+      return neighborsOf(characters, predicate.characterId).some((n) => n.id === world.culpritId) === predicate.expected;
     case "not":
       return !evaluatePredicate(predicate.operand, characters, world);
     case "and":

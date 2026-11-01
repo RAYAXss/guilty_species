@@ -6,6 +6,7 @@ import { DIFFICULTY_ORDER, type GameState } from "../../application/game/session
 import { characterRange } from "../../domain/generator/difficulty";
 import { CharacterCard } from "../components/CharacterCard";
 import { motionTokens } from "../tokens/motion";
+import { portraitSrc } from "../tokens/portrait";
 
 interface Props {
   state: GameState;
@@ -20,6 +21,17 @@ const HERO = [
   { id: "varek", say: "Gorak dit la vérité.", tilt: 6 },
 ].map((h) => ({ ...h, character: CHARACTER_CATALOG.find((c) => c.id === h.id)! }));
 
+const BG_CARDS = [
+  { id: "aldric", x: "3%", y: "8%", rotate: -18, scale: 0.7 },
+  { id: "mira", x: "88%", y: "5%", rotate: 14, scale: 0.6 },
+  { id: "brumm", x: "7%", y: "55%", rotate: 22, scale: 0.55 },
+  { id: "ondine", x: "85%", y: "45%", rotate: -12, scale: 0.65 },
+  { id: "karn", x: "92%", y: "78%", rotate: 8, scale: 0.5 },
+  { id: "neris", x: "2%", y: "82%", rotate: -25, scale: 0.6 },
+  { id: "pip", x: "45%", y: "90%", rotate: 5, scale: 0.55 },
+  { id: "sombrelame", x: "70%", y: "88%", rotate: -10, scale: 0.5 },
+].map((c) => ({ ...c, character: CHARACTER_CATALOG.find((ch) => ch.id === c.id)! }));
+
 export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Props) {
   const { difficulty, characterCount, lastResult } = state;
   const level = DIFFICULTY_ORDER.indexOf(difficulty);
@@ -28,16 +40,34 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
 
   return (
     <motion.main
-      className="mx-auto flex min-h-dvh max-w-5xl flex-col items-center gap-5 px-3 pb-8 pt-6 sm:gap-8 sm:px-4 sm:pb-10 sm:pt-8"
+      className="relative mx-auto flex min-h-dvh max-w-5xl flex-col items-center gap-5 px-3 pb-8 pt-6 sm:gap-8 sm:px-4 sm:pb-10 sm:pt-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: motionTokens.duration.normal }}
     >
-      <header className="text-center">
+      {/* Scattered portrait cards in the background */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden opacity-[0.08]">
+        {BG_CARDS.map((card, i) => (
+          <motion.div
+            key={card.id}
+            className="absolute w-28 sm:w-36"
+            style={{ left: card.x, top: card.y }}
+            initial={{ opacity: 0, scale: 0.3, rotate: card.rotate * 2 }}
+            animate={{ opacity: 1, scale: card.scale, rotate: card.rotate }}
+            transition={{ delay: 0.15 * i, duration: 0.8, type: "spring", stiffness: 80, damping: 14 }}
+          >
+            <div className="overflow-hidden rounded-2xl border-4 border-ink bg-white shadow-xl">
+              <img src={portraitSrc(card.character)} alt="" className="aspect-[3/4] w-full object-cover" />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <header className="relative text-center">
         <h1 className="font-display text-4xl font-extrabold leading-[0.95] sm:text-7xl">Fantasy Deduction</h1>
         <p className="mx-auto mt-2 max-w-md text-base font-semibold sm:mt-3 sm:text-lg text-muted">
-          Chaque créature affirme quelque chose. Les règles disent qui dit vrai. Un seul suspect tient jusqu'au bout.
+          Chaque créature affirme quelque chose. La règle dit combien disent vrai. Un seul suspect tient jusqu'au bout.
         </p>
       </header>
 
@@ -68,7 +98,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
         </motion.p>
       )}
 
-      <section className="w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-4 shadow-[0_6px_0_#1d1a4a] sm:p-5">
+      <section className="relative w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-4 shadow-[0_6px_0_#1d1a4a] sm:p-5">
         <h2 id="level-label" className="font-display text-xl font-extrabold">
           Niveau
         </h2>

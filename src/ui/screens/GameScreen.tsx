@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { ArrowLeft, Gavel, Heart, MousePointerClick } from "lucide-react";
+import { ArrowLeft, Gavel, Heart, Map as MapIcon, MousePointerClick } from "lucide-react";
 import { MAX_ATTEMPTS, nextDifficulty, type GameState } from "../../application/game/session";
 import { CharacterCard, type CardState } from "../components/CharacterCard";
+import { MapDialog } from "../components/MapDialog";
 import { ResultDialog } from "../components/ResultDialog";
 import { RulesBoard } from "../components/RulesBoard";
 import { motionTokens } from "../tokens/motion";
@@ -17,6 +18,7 @@ interface Props {
 export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props) {
   const { round, feedback, difficulty } = state;
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapOpen, setMapOpen] = useState(true);
   if (!round) return null;
 
   const { puzzle, innocentIds, attemptsLeft } = round;
@@ -49,17 +51,27 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
         <h1 className="min-w-0 truncate text-center font-display text-base font-extrabold sm:text-2xl">
           Niveau {difficulty} <span className="text-muted">· {puzzle.characters.length} créatures</span>
         </h1>
-        <div className="flex shrink-0 items-center gap-0.5 rounded-2xl bg-white px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
-          {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
-            <Heart
-              key={i}
-              aria-hidden
-              className={`size-[18px] sm:size-[22px] ${i < attemptsLeft ? "fill-danger text-danger" : "text-ink/25"}`}
-            />
-          ))}
-          <span className="ml-1 hidden sm:inline">
-            {attemptsLeft} essai{attemptsLeft > 1 ? "s" : ""}
-          </span>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={() => setMapOpen(true)}
+            aria-label="Ouvrir la carte de Fantolia"
+            className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-2xl border-[3px] border-ink/20 bg-white font-bold hover:border-ink sm:size-auto sm:px-4 sm:py-2"
+          >
+            <MapIcon size={18} aria-hidden />
+            <span className="hidden sm:inline">Carte</span>
+          </button>
+          <div className="flex shrink-0 items-center gap-0.5 rounded-2xl bg-white px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
+            {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
+              <Heart
+                key={i}
+                aria-hidden
+                className={`size-[18px] sm:size-[22px] ${i < attemptsLeft ? "fill-danger text-danger" : "text-ink/25"}`}
+              />
+            ))}
+            <span className="ml-1 hidden sm:inline">
+              {attemptsLeft} essai{attemptsLeft > 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -94,6 +106,8 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
           Accuser
         </button>
       </div>
+
+      {mapOpen && <MapDialog characters={puzzle.characters} onClose={() => setMapOpen(false)} />}
 
       {feedback && (
         <ResultDialog
