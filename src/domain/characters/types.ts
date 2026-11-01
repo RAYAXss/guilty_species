@@ -8,8 +8,7 @@ export interface Character {
   name: string;
   species: string;
   alignment: CharacterAlignment;
-  /** Home region in Fantolia: drives the "neighbor" clues. */
-  region: RegionId;
+  region: import("../world/fantolia").RegionId;
   /** Generation metadata only: never affects logical evaluation. */
   weight: number;
   description?: string;

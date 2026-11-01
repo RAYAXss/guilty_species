@@ -13,7 +13,6 @@ interface Props {
   onClose: () => void;
 }
 
-/** Simple map of Fantolia: pick a creature to see which regions border its own. */
 export function MapDialog({ characters, onClose }: Props) {
   const [focusId, setFocusId] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -44,7 +43,7 @@ export function MapDialog({ characters, onClose }: Props) {
         animate={{ scale: 1, y: 0, opacity: 1 }}
         transition={motionTokens.spring.soft}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-3xl rounded-card border-2 border-sun bg-surface p-3 text-ink shadow-[0_8px_0_#07050d] sm:p-5"
+        className="w-full max-w-3xl rounded-card border-[3px] border-sun bg-white p-3 text-ink shadow-[0_8px_0_#1d1a4a] sm:p-5"
       >
         <div className="flex items-center justify-between gap-3">
           <h2 id="map-title" className="font-display text-xl font-extrabold sm:text-2xl">
@@ -54,7 +53,7 @@ export function MapDialog({ characters, onClose }: Props) {
             ref={closeRef}
             onClick={onClose}
             aria-label="Fermer la carte"
-            className="inline-flex size-11 items-center justify-center rounded-lg border-2 border-ink/30 hover:border-ink"
+            className="inline-flex size-11 items-center justify-center rounded-lg border-[3px] border-ink/30 hover:border-ink"
           >
             <X size={20} aria-hidden />
           </button>
@@ -65,7 +64,7 @@ export function MapDialog({ characters, onClose }: Props) {
 
         <svg
           viewBox={`0 0 ${MAP_VIEWBOX.width} ${MAP_VIEWBOX.height}`}
-          className="mt-3 block h-auto w-full rounded-lg border-2 border-ink/40 bg-[#8fb7c9]"
+          className="mt-3 block h-auto w-full rounded-lg border-[3px] border-ink/40 bg-[#8fb7c9]"
           role="group"
           aria-label="Carte des six régions de Fantolia"
         >
@@ -135,9 +134,6 @@ export function MapDialog({ characters, onClose }: Props) {
                   }}
                 >
                   <circle cx={cx} cy={cy} r={picked ? 27 : 24} fill={colors.soft} stroke={picked ? "#d1a03a" : colors.solid} strokeWidth={picked ? 5 : 3} />
-                  <text x={cx} y={cy + 7} textAnchor="middle" className="fill-[#1f1830] font-display text-[20px] font-bold" pointerEvents="none">
-                    {c.name.charAt(0)}
-                  </text>
                   <clipPath id={`clip-${c.id}`}>
                     <circle cx={cx} cy={cy} r={21} />
                   </clipPath>

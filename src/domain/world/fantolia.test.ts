@@ -1,40 +1,63 @@
 import { describe, expect, it } from "vitest";
-import { CHARACTER_CATALOG } from "../characters/catalog";
-import { REGION_IDS, adjacentRegions, areNeighbors, neighborsOf, type RegionId } from "./fantolia";
+import { REGION_IDS, adjacentRegions, neighborsOf } from "./fantolia";
+import { evaluatePredicate } from "../statements/predicate";
+import { renderStatement } from "../statements/render";
+import type { Character } from "../characters/types";
 
-describe("Fantolia", () => {
-  it("has symmetric borders and no region next to itself", () => {
-    for (const a of REGION_IDS) {
-      expect(areNeighbors(a, a)).toBe(false);
-      for (const b of adjacentRegions(a)) expect(areNeighbors(b, a)).toBe(true);
-    }
-  });
+const chars: Character[] = [
+  { id: "elara", name: "Elara", species: "elfe", alignment: "pacifiste", region: "foret", weight: 5 },
+  { id: "aldric", name: "Aldric", species: "humain", alignment: "belliqueux", region: "montagnes", weight: 5 },
+  { id: "gorak", name: "Gorak", species: "orc", alignment: "belliqueux", region: "desert", weight: 3 },
+];
 
-  it("connects every region to the rest of the map", () => {
-    const seen = new Set<RegionId>([REGION_IDS[0]]);
-    const queue: RegionId[] = [REGION_IDS[0]];
-    while (queue.length) {
-      for (const next of adjacentRegions(queue.shift()!)) {
-        if (!seen.has(next)) {
-          seen.add(next);
-          queue.push(next);
-        }
+describe("fantolia adjacency", () => {
+  it("is symmetric", () => {
+    for (const region of REGION_IDS) {
+      for (const neighbor of adjacentRegions(region)) {
+        expect(adjacentRegions(neighbor)).toContain(region);
       }
     }
-    expect(seen.size).toBe(REGION_IDS.length);
+  });
+});
+
+describe("culpritNeighborOf predicate", () => {
+  it("is true when culprit lives in a bordering region", () => {
+    // foret borders montagnes, so aldric (montagnes) is a neighbor of elara (foret)
+    const result = evaluatePredicate(
+      { type: "culpritNeighborOf", characterId: "elara", expected: true },
+      chars,
+      { culpritId: "aldric", assignments: { elara: true, aldric: false, gorak: true } },
+    );
+    expect(result).toBe(true);
   });
 
-  it("puts every catalog character in a known region", () => {
-    for (const c of CHARACTER_CATALOG) expect(REGION_IDS).toContain(c.region);
+  it("is false when culprit lives in a non-bordering region", () => {
+    // foret does not border desert, so gorak (desert) is not a neighbor of elara (foret)
+    const result = evaluatePredicate(
+      { type: "culpritNeighborOf", characterId: "elara", expected: true },
+      chars,
+      { culpritId: "gorak", assignments: { elara: true, aldric: true, gorak: false } },
+    );
+    expect(result).toBe(false);
+  });
+});
+
+describe("neighbor rendering", () => {
+  it("uses 'un voisin d'Elara' for another speaker", () => {
+    const text = renderStatement(
+      { type: "culpritNeighborOf", characterId: "elara", expected: true },
+      chars,
+      "aldric",
+    );
+    expect(text).toBe("Le coupable est un voisin d'Elara.");
   });
 
-  it("neighbors live in bordering regions, never in the same one", () => {
-    const elara = CHARACTER_CATALOG.find((c) => c.id === "elara")!;
-    const neighbors = neighborsOf(CHARACTER_CATALOG, "elara");
-    expect(neighbors.length).toBeGreaterThan(0);
-    for (const n of neighbors) {
-      expect(n.region).not.toBe(elara.region);
-      expect(areNeighbors(elara.region, n.region)).toBe(true);
-    }
+  it("uses 'un de mes voisins' when the speaker is the subject", () => {
+    const text = renderStatement(
+      { type: "culpritNeighborOf", characterId: "elara", expected: true },
+      chars,
+      "elara",
+    );
+    expect(text).toBe("Le coupable est un de mes voisins.");
   });
 });

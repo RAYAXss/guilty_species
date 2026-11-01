@@ -10,7 +10,7 @@ export type LogicalPredicate =
   | { type: "characterTruth"; characterId: string; expected: boolean }
   | { type: "culpritIs"; characterId: string; expected: boolean }
   | { type: "culpritAlignment"; alignment: CharacterAlignment; expected: boolean }
-  /** A culprit lives in a region bordering the region of `characterId`. */
+  | { type: "culpritSpecies"; species: string; expected: boolean }
   | { type: "culpritNeighborOf"; characterId: string; expected: boolean }
   | { type: "not"; operand: LogicalPredicate }
   | { type: "and"; operands: LogicalPredicate[] }
@@ -34,14 +34,11 @@ export function evaluatePredicate(
     case "culpritIs":
       return world.culpritIds.includes(predicate.characterId) === predicate.expected;
     case "culpritAlignment":
-      return (
-        world.culpritIds.some((id) => findCharacter(characters, id).alignment === predicate.alignment) ===
-        predicate.expected
-      );
-    case "culpritNeighborOf": {
-      const neighbors = neighborsOf(characters, predicate.characterId);
-      return world.culpritIds.some((id) => neighbors.some((n) => n.id === id)) === predicate.expected;
-    }
+      return (findCharacter(characters, world.culpritId).alignment === predicate.alignment) === predicate.expected;
+    case "culpritSpecies":
+      return (findCharacter(characters, world.culpritId).species === predicate.species) === predicate.expected;
+    case "culpritNeighborOf":
+      return neighborsOf(characters, predicate.characterId).some((n) => n.id === world.culpritId) === predicate.expected;
     case "not":
       return !evaluatePredicate(predicate.operand, characters, world);
     case "and":

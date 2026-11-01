@@ -1,6 +1,7 @@
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import { Ban, Check, MapPin, Quote } from "lucide-react";
 import type { Character } from "../../domain/characters/types";
+import { REGION_NAMES } from "../../domain/world/fantolia";
 import { alignmentStyle } from "../tokens/alignment";
 import { speciesColors } from "../tokens/species";
 import { motionTokens } from "../tokens/motion";
@@ -142,9 +143,9 @@ export function CharacterCard({ character, statement, state = "idle", index = 0,
         <span className="mb-2 mt-2 block px-0.5 sm:mb-3 sm:mt-3 sm:px-1">
           <span className="block truncate font-display text-base font-bold leading-none tracking-wide sm:text-xl">{character.name}</span>
           <span className="mt-0.5 block text-xs font-semibold capitalize text-muted sm:mt-1 sm:text-[0.95rem]">{character.species}</span>
-          <span className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-muted sm:text-sm">
-            <MapPin className="size-3.5 shrink-0 sm:size-4" aria-hidden />
-            <span className="truncate">{REGION_NAMES[character.region]}</span>
+          <span className="mt-0.5 flex items-center gap-0.5 text-[0.65rem] font-semibold text-muted/70 sm:text-xs">
+            <MapPin className="size-2.5 sm:size-3" aria-hidden />
+            {REGION_NAMES[character.region]}
           </span>
           <span className="mt-1.5 block sm:mt-2">
             <AlignmentBadge alignment={character.alignment} />

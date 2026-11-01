@@ -7,8 +7,8 @@ import { possibleCulprits, solve } from "./solve";
 
 const chars: Character[] = [
   { id: "a", name: "A", species: "elfe", alignment: "pacifiste", region: "foret", weight: 1 },
-  { id: "b", name: "B", species: "orc", alignment: "belliqueux", region: "montagnes", weight: 1 },
-  { id: "c", name: "C", species: "dragon", alignment: "vengeur", region: "desert", weight: 1 },
+  { id: "b", name: "B", species: "orc", alignment: "belliqueux", region: "desert", weight: 1 },
+  { id: "c", name: "C", species: "dragon", alignment: "vengeur", region: "ombres", weight: 1 },
 ];
 
 const stmt = (characterId: string, predicate: Statement["predicate"]): Statement => ({

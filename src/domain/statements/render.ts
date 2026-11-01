@@ -19,9 +19,9 @@ const TRAIT: Record<CharacterAlignment, string> = {
 };
 
 /** Builds the player-facing French text from the predicate (never the reverse). */
-export function renderPredicate(p: LogicalPredicate, characters: readonly Character[], ctx: RenderContext = {}): string {
+export function renderPredicate(p: LogicalPredicate, characters: readonly Character[], speakerId?: string): string {
   const name = (id: string) => findCharacter(characters, id).name;
-  const multi = ctx.multiCulprit === true;
+  const de = (n: string) => /^[aeiouyàâéèêëïîôùûüæœh]/i.test(n) ? `d'${n}` : `de ${n}`;
   switch (p.type) {
     case "characterTruth":
       return p.expected ? `${name(p.characterId)} dit la vérité` : `${name(p.characterId)} ment`;
@@ -29,32 +29,33 @@ export function renderPredicate(p: LogicalPredicate, characters: readonly Charac
       if (multi) return p.expected ? `${name(p.characterId)} est coupable` : `${name(p.characterId)} n'est pas coupable`;
       return p.expected ? `Le coupable est ${name(p.characterId)}` : `Le coupable n'est pas ${name(p.characterId)}`;
     case "culpritAlignment":
-      if (multi) return p.expected ? `Au moins un coupable est ${TRAIT[p.alignment]}` : `Aucun coupable n'est ${TRAIT[p.alignment]}`;
-      return p.expected ? `Le coupable est ${TRAIT[p.alignment]}` : `Le coupable n'est pas ${TRAIT[p.alignment]}`;
+      return p.expected ? `Le coupable est ${p.alignment}` : `Le coupable n'est pas ${p.alignment}`;
+    case "culpritSpecies":
+      return p.expected ? `Le coupable est de l'espèce ${p.species}` : `Le coupable n'est pas de l'espèce ${p.species}`;
     case "culpritNeighborOf": {
-      const self = p.characterId === ctx.speakerId;
-      if (self) return p.expected ? "Un de mes voisins est coupable" : "Aucun de mes voisins n'est coupable";
-      return p.expected ? `Un voisin de ${name(p.characterId)} est coupable` : `Aucun voisin de ${name(p.characterId)} n'est coupable`;
+      const own = p.characterId === speakerId;
+      const subject = own ? "un de mes voisins" : `un voisin ${de(name(p.characterId))}`;
+      return p.expected ? `Le coupable est ${subject}` : `Le coupable n'est pas ${subject}`;
     }
     case "not":
-      return `Il est faux que : ${renderPredicate(p.operand, characters, ctx)}`;
+      return `Il est faux que : ${renderPredicate(p.operand, characters, speakerId)}`;
     case "and":
-      return joinOperands(p.operands, characters, ctx, ", et ");
+      return joinOperands(p.operands, characters, ", et ", speakerId);
     case "or":
-      return joinOperands(p.operands, characters, ctx, ", ou ");
+      return joinOperands(p.operands, characters, ", ou ", speakerId);
   }
 }
 
-export function renderStatement(p: LogicalPredicate, characters: readonly Character[], ctx: RenderContext = {}): string {
-  return `${renderPredicate(p, characters, ctx)}.`;
+export function renderStatement(p: LogicalPredicate, characters: readonly Character[], speakerId?: string): string {
+  return `${renderPredicate(p, characters, speakerId)}.`;
 }
 
 /** Lowercases the generic openers ("Le coupable...") of operands that follow another clause; names stay capitalized. */
-function joinOperands(operands: LogicalPredicate[], characters: readonly Character[], ctx: RenderContext, sep: string): string {
+function joinOperands(operands: LogicalPredicate[], characters: readonly Character[], sep: string, speakerId?: string): string {
   return operands
     .map((o, i) => {
-      const text = renderPredicate(o, characters, ctx);
-      return i === 0 ? text : text.replace(/^(Le coupable|Il est faux|Un de mes|Un voisin|Aucun|Au moins un)/, (m) => m.toLowerCase());
+      const text = renderPredicate(o, characters, speakerId);
+      return i === 0 ? text : text.replace(/^(Le coupable|Il est faux)/, (m) => m.toLowerCase());
     })
     .join(sep);
 }

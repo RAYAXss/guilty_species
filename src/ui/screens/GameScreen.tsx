@@ -18,8 +18,8 @@ interface Props {
 
 export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props) {
   const { round, feedback, difficulty } = state;
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [mapOpen, setMapOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapOpen, setMapOpen] = useState(true);
   if (!round) return null;
 
   const { puzzle, innocentIds, attemptsLeft } = round;
@@ -67,25 +67,26 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
           Niveau {difficulty} <span className="text-dim">· {puzzle.characters.length} créatures</span>
         </h1>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-        <button
-          onClick={() => setMapOpen(true)}
-          aria-label="Ouvrir la carte de Fantolia"
-          className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-sun/50 bg-surface text-ink font-bold hover:border-sun sm:size-auto sm:px-4 sm:py-2"
-        >
-          <MapIcon size={18} aria-hidden />
-          <span className="hidden sm:inline">Carte</span>
-        </button>
-        <div className="flex shrink-0 items-center gap-0.5 rounded-lg bg-surface text-ink px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
-          {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
-            <Heart
-              key={i}
-              aria-hidden
-              className={`size-[18px] sm:size-[22px] ${i < attemptsLeft ? "fill-danger text-danger" : "text-ink/25"}`}
-            />
-          ))}
-          <span className="ml-1 hidden sm:inline">
-            {attemptsLeft} essai{attemptsLeft > 1 ? "s" : ""}
-          </span>
+          <button
+            onClick={() => setMapOpen(true)}
+            aria-label="Ouvrir la carte de Fantolia"
+            className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-2xl border-[3px] border-ink/20 bg-white font-bold hover:border-ink sm:size-auto sm:px-4 sm:py-2"
+          >
+            <MapIcon size={18} aria-hidden />
+            <span className="hidden sm:inline">Carte</span>
+          </button>
+          <div className="flex shrink-0 items-center gap-0.5 rounded-2xl bg-white px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
+            {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
+              <Heart
+                key={i}
+                aria-hidden
+                className={`size-[18px] sm:size-[22px] ${i < attemptsLeft ? "fill-danger text-danger" : "text-ink/25"}`}
+              />
+            ))}
+            <span className="ml-1 hidden sm:inline">
+              {attemptsLeft} essai{attemptsLeft > 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
         </div>
       </header>

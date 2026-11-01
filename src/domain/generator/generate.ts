@@ -3,6 +3,7 @@ import { CHARACTER_CATALOG } from "../characters/catalog";
 import type { Difficulty, Puzzle, Solution, Statement } from "../puzzle/types";
 import { evaluatePredicate, type LogicalPredicate } from "../statements/predicate";
 import { renderStatement } from "../statements/render";
+import { neighborsOf } from "../world/fantolia";
 import { evaluateRule, type Rule } from "../rules/rule";
 import { neighborsOf } from "../world/fantolia";
 import { solve } from "../solver/solve";
@@ -44,13 +45,12 @@ export function generatePuzzle(options: GenerateOptions): GeneratedPuzzle {
     const puzzle: Puzzle = { id: `puzzle-${difficulty}-${params.characterCount}-${seed}`, seed, difficulty, characters, statements, rules };
 
     // Never ship a puzzle that has not passed the solver.
-    // Uniqueness is never negotiable. The "not too easy" bar is only relaxed for the last attempts
-    // so an unlucky seed still yields a (valid) puzzle instead of an error.
-    const solutions = solve(puzzle, 2);
-    const hardEnough = attempt > maxAttempts * 0.6 || analyzePuzzle(puzzle).nearMisses >= params.minNearMisses;
-    if (solutions.length === 1 && hardEnough) {
-      return { puzzle, solution: world, attempts: attempt };
-    }
+    const solutions = solve(puzzle);
+    if (solutions.length !== 1) continue;
+    // Reject trivially-solvable puzzles.
+    if (rulesOnlySuspects(puzzle, params.minRulesOnlySuspects) < params.minRulesOnlySuspects) continue;
+    if (hasExcessRedundantClues(puzzle, params.maxRedundantClues)) continue;
+    return { puzzle, solution: world, attempts: attempt };
   }
   throw new PuzzleGenerationError(`No unique puzzle found in ${maxAttempts} attempts (seed ${seed})`);
 }
@@ -150,6 +150,14 @@ function atomicCandidates(characters: Character[], speakerId: string): LogicalPr
       { type: "culpritNeighborOf", characterId: c.id, expected: true },
       { type: "culpritNeighborOf", characterId: c.id, expected: false },
     ]),
+    ...characters.flatMap<LogicalPredicate>((c) =>
+      neighborsOf(characters, c.id).length > 0
+        ? [
+            { type: "culpritNeighborOf", characterId: c.id, expected: true },
+            { type: "culpritNeighborOf", characterId: c.id, expected: false },
+          ]
+        : [],
+    ),
   ];
 }
 
@@ -180,11 +188,49 @@ function buildStatements(rng: Rng, params: DifficultyParams, characters: Charact
         id: `${speaker.id}-s${i}`,
         characterId: speaker.id,
         predicate,
-        text: renderStatement(predicate, characters, { speakerId: speaker.id, multiCulprit }),
+        text: renderStatement(predicate, characters, speaker.id),
       });
     }
   }
   return statements;
+}
+
+/** How many culprits remain possible using only the rules (no statements). */
+function rulesOnlySuspects(puzzle: Puzzle, minNeeded: number): number {
+  const { characters, rules } = puzzle;
+  const n = characters.length;
+  let suspects = 0;
+  for (const culprit of characters) {
+    let possible = false;
+    for (let mask = 0; mask < 1 << n; mask++) {
+      const assignments: Record<string, boolean> = {};
+      characters.forEach((c, i) => { assignments[c.id] = (mask & (1 << i)) !== 0; });
+      const world: Solution = { culpritId: culprit.id, assignments };
+      if (rules.every((r) => evaluateRule(r, characters, world))) { possible = true; break; }
+    }
+    if (possible && ++suspects >= minNeeded) return suspects;
+  }
+  return suspects;
+}
+
+/** Are there more than `limit` clues whose removal still leaves a unique solution? */
+function hasExcessRedundantClues(puzzle: Puzzle, limit: number): boolean {
+  if (limit === Infinity) return false;
+  const { statements, rules } = puzzle;
+  let redundant = 0;
+  // Replace each statement with a tautology instead of removing it, because
+  // a speaker with zero statements is forced truthful by the solver ([].every === true).
+  for (let i = 0; i < statements.length; i++) {
+    const freed: Statement[] = statements.map((s, j): Statement =>
+      j === i ? { ...s, predicate: { type: "characterTruth", characterId: s.characterId, expected: true } } : s,
+    );
+    if (solve({ ...puzzle, statements: freed }).length === 1 && ++redundant > limit) return true;
+  }
+  for (let i = 1; i < rules.length; i++) {
+    const without = { ...puzzle, rules: rules.filter((_, j) => j !== i) };
+    if (solve(without).length === 1 && ++redundant > limit) return true;
+  }
+  return false;
 }
 
 /** What a predicate talks about, used to avoid composites over a single subject. */
@@ -196,6 +242,8 @@ function subjectOf(p: LogicalPredicate): string {
       return `culprit:${p.characterId}`;
     case "culpritAlignment":
       return `alignment:${p.alignment}`;
+    case "culpritSpecies":
+      return `species:${p.species}`;
     case "culpritNeighborOf":
       return `neighbor:${p.characterId}`;
     default:
