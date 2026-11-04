@@ -1,6 +1,9 @@
+import { isUnlocked, levelPuzzle, recordWin } from "../../domain/campaign/campaign";
+import type { CampaignProgress } from "../../domain/campaign/types";
 import { clampCharacterCount } from "../../domain/generator/difficulty";
 import { generatePuzzle } from "../../domain/generator/generate";
 import { culpritCountsOf } from "../../domain/rules/rule";
+import { solve } from "../../domain/solver/solve";
 import type { Difficulty, Puzzle } from "../../domain/puzzle/types";
 
 export const DIFFICULTY_ORDER: readonly Difficulty[] = ["facile", "normal", "difficile", "expert"];
@@ -27,12 +30,18 @@ export type Feedback =
   | { kind: "lost"; culpritIds: string[] };
 
 export interface GameState {
-  screen: "menu" | "playing";
+  screen: "menu" | "campaign" | "playing";
+  /** Free play draws a new puzzle each round; campaign plays frozen levels. */
+  mode: "free" | "campaign";
+  /** Free-play settings: the campaign never changes them. */
   difficulty: Difficulty;
   characterCount: number;
+  /** Campaign level being played (or last played). */
+  levelId: string | null;
+  progress: CampaignProgress;
   round: Round | null;
   feedback: Feedback | null;
-  /** Result of the last finished round, shown on the menu. */
+  /** Result of the last finished round, shown on the menu or the campaign map. */
   lastResult: "won" | "lost" | null;
 }
 
@@ -40,14 +49,20 @@ export type GameAction =
   | { type: "setCharacterCount"; count: number }
   | { type: "setDifficulty"; difficulty: Difficulty }
   | { type: "start"; seed: number }
+  | { type: "openCampaign" }
+  | { type: "openMenu" }
+  | { type: "startLevel"; levelId: string }
   | { type: "accuse"; characterIds: string[] }
   | { type: "dismissFeedback" }
   | { type: "quit" };
 
 export const initialState: GameState = {
   screen: "menu",
+  mode: "free",
   difficulty: "facile",
   characterCount: 4,
+  levelId: null,
+  progress: {},
   round: null,
   feedback: null,
   lastResult: null,
@@ -73,7 +88,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         characterCount: state.characterCount,
       });
       const round: Round = { puzzle, culpritIds: solution.culpritIds, attemptsLeft: MAX_ATTEMPTS, innocentIds: [] };
-      return { ...state, screen: "playing", round, feedback: null, lastResult: null };
+      return { ...state, screen: "playing", mode: "free", round, feedback: null, lastResult: null };
+    }
+
+    case "openCampaign":
+      return { ...state, screen: "campaign", round: null, feedback: null, lastResult: null };
+
+    case "openMenu":
+      return { ...state, screen: "menu", round: null, feedback: null, lastResult: null };
+
+    case "startLevel": {
+      if (!isUnlocked(state.progress, action.levelId)) return state;
+      const puzzle = levelPuzzle(action.levelId);
+      // Frozen levels are checked by tests; the solver still provides the answer, so there is no second source of truth.
+      const [solution] = solve(puzzle);
+      if (!solution) return state;
+      const round: Round = { puzzle, culpritIds: solution.culpritIds, attemptsLeft: MAX_ATTEMPTS, innocentIds: [] };
+      return { ...state, screen: "playing", mode: "campaign", levelId: action.levelId, round, feedback: null, lastResult: null };
     }
 
     case "accuse": {
@@ -105,6 +136,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { feedback } = state;
       if (!feedback) return state;
       if (feedback.kind === "retry") return { ...state, feedback: null };
+      if (state.mode === "campaign") {
+        const { round, levelId } = state;
+        const progress =
+          feedback.kind === "won" && round && levelId ? recordWin(state.progress, levelId, round.attemptsLeft) : state.progress;
+        return { ...state, screen: "campaign", round: null, feedback: null, lastResult: feedback.kind, progress };
+      }
       // Round over: back to the menu. Win => next difficulty, loss => same difficulty.
       const difficulty = feedback.kind === "won" ? nextDifficulty(state.difficulty) : state.difficulty;
       return {
@@ -119,6 +156,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "quit":
-      return { ...state, screen: "menu", round: null, feedback: null };
+      return { ...state, screen: state.mode === "campaign" ? "campaign" : "menu", round: null, feedback: null };
   }
 }

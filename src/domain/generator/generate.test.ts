@@ -75,7 +75,7 @@ describe("generatePuzzle", () => {
           for (let mask = 0; mask < 1 << characters.length; mask++) {
             const assignments: Record<string, boolean> = {};
             characters.forEach((c, i) => { assignments[c.id] = (mask & (1 << i)) !== 0; });
-            if (rules.every((r) => evaluateRule(r, characters, { culpritId: culprit.id, assignments }))) { suspects++; break; }
+            if (rules.every((r) => evaluateRule(r, characters, { culpritIds: [culprit.id], assignments }))) { suspects++; break; }
           }
         }
         expect(suspects).toBeGreaterThanOrEqual(params.minRulesOnlySuspects);

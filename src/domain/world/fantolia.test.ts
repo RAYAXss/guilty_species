@@ -26,7 +26,7 @@ describe("culpritNeighborOf predicate", () => {
     const result = evaluatePredicate(
       { type: "culpritNeighborOf", characterId: "elara", expected: true },
       chars,
-      { culpritId: "aldric", assignments: { elara: true, aldric: false, gorak: true } },
+      { culpritIds: ["aldric"], assignments: { elara: true, aldric: false, gorak: true } },
     );
     expect(result).toBe(true);
   });
@@ -36,7 +36,7 @@ describe("culpritNeighborOf predicate", () => {
     const result = evaluatePredicate(
       { type: "culpritNeighborOf", characterId: "elara", expected: true },
       chars,
-      { culpritId: "gorak", assignments: { elara: true, aldric: true, gorak: false } },
+      { culpritIds: ["gorak"], assignments: { elara: true, aldric: true, gorak: false } },
     );
     expect(result).toBe(false);
   });
@@ -49,7 +49,7 @@ describe("neighbor rendering", () => {
       chars,
       "aldric",
     );
-    expect(text).toBe("Le coupable est un voisin d'Elara.");
+    expect(text).toBe("Un voisin d'Elara est coupable.");
   });
 
   it("uses 'un de mes voisins' when the speaker is the subject", () => {
@@ -58,6 +58,6 @@ describe("neighbor rendering", () => {
       chars,
       "elara",
     );
-    expect(text).toBe("Le coupable est un de mes voisins.");
+    expect(text).toBe("Un de mes voisins est coupable.");
   });
 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, Gavel, Heart, Map as MapIcon, MousePointerClick } from "lucide-react";
 import { MAX_ATTEMPTS, nextDifficulty, type GameState } from "../../application/game/session";
@@ -7,6 +7,8 @@ import { MapDialog } from "../components/MapDialog";
 import { ResultDialog } from "../components/ResultDialog";
 import { RulesBoard } from "../components/RulesBoard";
 import { culpritCountsOf } from "../../domain/rules/rule";
+import { DIFFICULTY_PARAMS } from "../../domain/generator/difficulty";
+import { LEVELS, nextLevelId, starsFor } from "../../domain/campaign/campaign";
 import { motionTokens } from "../tokens/motion";
 
 interface Props {
@@ -17,9 +19,27 @@ interface Props {
 }
 
 export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props) {
-  const { round, feedback, difficulty } = state;
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [mapOpen, setMapOpen] = useState(true);
+  const { round, feedback } = state;
+  // Read from the puzzle, not the free-play setting: campaign levels carry their own difficulty.
+  const difficulty = round?.puzzle.difficulty ?? state.difficulty;
+  const level = state.mode === "campaign" ? LEVELS.find((l) => l.id === state.levelId) : undefined;
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const hasMap = DIFFICULTY_PARAMS[difficulty].neighborClues;
+  const [mapOpen, setMapOpen] = useState(hasMap);
+
+  useEffect(() => {
+    if (!hasMap) return;
+    const onKey = (e: KeyboardEvent) => {
+      // Inside a dialog (the map itself, quit, result), Tab keeps its normal focus behavior.
+      if (e.key === "Tab" && !(e.target as Element | null)?.closest?.('[role="dialog"],[role="alertdialog"]')) {
+        e.preventDefault();
+        setMapOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hasMap]);
+
   if (!round) return null;
 
   const { puzzle, innocentIds, attemptsLeft } = round;
@@ -64,18 +84,20 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
           <span className="hidden sm:inline">Quitter la manche</span>
         </button>
         <h1 className="min-w-0 truncate text-center font-display text-base font-extrabold sm:text-2xl">
-          Niveau {difficulty} <span className="text-dim">· {puzzle.characters.length} créatures</span>
+          {level ? level.title : `Niveau ${difficulty}`} <span className="text-dim">· {puzzle.characters.length} créatures</span>
         </h1>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <button
-            onClick={() => setMapOpen(true)}
-            aria-label="Ouvrir la carte de Fantolia"
-            className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-2xl border-[3px] border-ink/20 bg-white font-bold hover:border-ink sm:size-auto sm:px-4 sm:py-2"
-          >
-            <MapIcon size={18} aria-hidden />
-            <span className="hidden sm:inline">Carte</span>
-          </button>
-          <div className="flex shrink-0 items-center gap-0.5 rounded-2xl bg-white px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
+          {hasMap && (
+            <button
+              onClick={() => setMapOpen(true)}
+              aria-label="Ouvrir la carte de Fantolia"
+              className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-sun/50 bg-surface text-ink font-bold hover:border-sun sm:size-auto sm:px-4 sm:py-2"
+            >
+              <MapIcon size={18} aria-hidden />
+              <span className="hidden sm:inline">Carte</span>
+            </button>
+          )}
+          <div className="flex shrink-0 items-center gap-0.5 rounded-lg border-2 border-sun/50 bg-surface text-ink px-2 py-1.5 text-sm font-bold sm:gap-1 sm:px-3 sm:py-2 sm:text-base" role="status">
             {Array.from({ length: MAX_ATTEMPTS }, (_, i) => (
               <Heart
                 key={i}
@@ -88,8 +110,9 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
             </span>
           </div>
         </div>
-        </div>
-      </header>
+        </header>
+
+      {level && <p className="text-center text-sm font-semibold italic text-dim sm:text-base">{level.story}</p>}
 
       <RulesBoard rules={puzzle.rules} />
 
@@ -123,7 +146,7 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
         </button>
       </div>
 
-      {mapOpen && <MapDialog characters={puzzle.characters} onClose={() => setMapOpen(false)} />}
+      {hasMap && mapOpen && <MapDialog characters={puzzle.characters} onClose={() => setMapOpen(false)} />}
 
       {feedback && (
         <ResultDialog
@@ -131,6 +154,8 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
           characters={puzzle.characters}
           difficulty={difficulty}
           nextDifficulty={nextDifficulty(difficulty)}
+          campaignStars={level ? starsFor(attemptsLeft) : undefined}
+          finale={level ? nextLevelId(level.id) === null : false}
           onContinue={onDismissFeedback}
         />
       )}

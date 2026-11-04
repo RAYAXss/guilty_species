@@ -6,7 +6,6 @@ import { alignmentStyle } from "../tokens/alignment";
 import { speciesColors } from "../tokens/species";
 import { motionTokens } from "../tokens/motion";
 import { AlignmentBadge } from "./AlignmentBadge";
-import { REGION_NAMES } from "../../domain/world/fantolia";
 import { portraitSrc } from "../tokens/portrait";
 import { Portrait } from "./Portrait";
 

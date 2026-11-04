@@ -43,7 +43,7 @@ export function MapDialog({ characters, onClose }: Props) {
         animate={{ scale: 1, y: 0, opacity: 1 }}
         transition={motionTokens.spring.soft}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-3xl rounded-card border-[3px] border-sun bg-white p-3 text-ink shadow-[0_8px_0_#1d1a4a] sm:p-5"
+        className="w-full max-w-3xl rounded-card border-2 border-sun bg-surface p-3 text-ink shadow-[0_8px_0_#07050d] sm:p-5"
       >
         <div className="flex items-center justify-between gap-3">
           <h2 id="map-title" className="font-display text-xl font-extrabold sm:text-2xl">

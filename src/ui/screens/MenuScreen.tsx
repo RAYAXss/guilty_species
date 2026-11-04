@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Frown, PartyPopper, Play, Star } from "lucide-react";
+import { Frown, Map as MapIcon, PartyPopper, Play, Star } from "lucide-react";
 import type { Difficulty } from "../../domain/puzzle/types";
 import { CHARACTER_CATALOG } from "../../domain/characters/catalog";
 import { DIFFICULTY_ORDER, type GameState } from "../../application/game/session";
@@ -13,6 +13,7 @@ interface Props {
   onSetCount: (n: number) => void;
   onSetDifficulty: (d: Difficulty) => void;
   onStart: () => void;
+  onOpenCampaign: () => void;
 }
 
 const HERO = [
@@ -32,8 +33,9 @@ const BG_CARDS = [
   { id: "sombrelame", x: "70%", y: "88%", rotate: -10, scale: 0.5 },
 ].map((c) => ({ ...c, character: CHARACTER_CATALOG.find((ch) => ch.id === c.id)! }));
 
-export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Props) {
+export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart, onOpenCampaign }: Props) {
   const { difficulty, characterCount, lastResult } = state;
+  const campaignStars = Object.values(state.progress).reduce((a, b) => a + b, 0);
   const level = DIFFICULTY_ORDER.indexOf(difficulty);
   const { min, max } = characterRange(difficulty);
   const counts = Array.from({ length: max - min + 1 }, (_, i) => min + i);
@@ -57,7 +59,7 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
             animate={{ opacity: 1, scale: card.scale, rotate: card.rotate }}
             transition={{ delay: 0.15 * i, duration: 0.8, type: "spring", stiffness: 80, damping: 14 }}
           >
-            <div className="overflow-hidden rounded-2xl border-4 border-ink bg-white shadow-xl">
+            <div className="overflow-hidden rounded-2xl border-4 border-ink bg-surface shadow-xl">
               <img src={portraitSrc(card.character)} alt="" className="aspect-[3/4] w-full object-cover" />
             </div>
           </motion.div>
@@ -71,10 +73,13 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
         </p>
       </header>
 
-      <div aria-hidden className="grid w-full max-w-2xl grid-cols-3 gap-2 pt-6 sm:gap-6 sm:pt-10">
+      <div
+        aria-hidden
+        className="grid w-full max-w-2xl auto-rows-fr grid-cols-2 gap-3 pt-6 sm:grid-cols-3 sm:gap-6 sm:pt-10 [&>*:last-child]:col-span-2 [&>*:last-child]:mx-auto [&>*:last-child]:w-[calc(50%-0.375rem)] sm:[&>*:last-child]:col-span-1 sm:[&>*:last-child]:mx-0 sm:[&>*:last-child]:w-auto"
+      >
         {HERO.map((h, i) => (
-          <div key={h.id} style={{ rotate: `${h.tilt}deg`, marginTop: h.tilt === 0 ? 0 : 14 }}>
-            <ul>
+          <div key={h.id} className="h-full" style={{ rotate: `${h.tilt}deg` }}>
+            <ul className="h-full">
               <CharacterCard character={h.character} statement={h.say} index={i} preview />
             </ul>
           </div>
@@ -98,8 +103,27 @@ export function MenuScreen({ state, onSetCount, onSetDifficulty, onStart }: Prop
         </motion.p>
       )}
 
-      <section className="relative w-full max-w-2xl rounded-card border-[3px] border-ink bg-white p-4 shadow-[0_6px_0_#1d1a4a] sm:p-5">
-        <h2 id="level-label" className="font-display text-xl font-extrabold">
+      <button
+        onClick={onOpenCampaign}
+        className="relative flex w-full max-w-2xl items-center gap-3 rounded-card border-2 border-sun bg-primary p-4 text-left text-white shadow-[0_6px_0_#07050d] transition active:translate-y-1 active:shadow-[0_2px_0_#07050d] sm:gap-4 sm:p-5"
+      >
+        <MapIcon className="size-10 shrink-0 sm:size-12" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-xl font-extrabold sm:text-2xl">Campagne</span>
+          <span className="block text-sm font-semibold text-white/85 sm:text-base">
+            Le Cœur de Fantolia a été volé. Suis la piste à travers les six régions.
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1 font-bold" aria-label={`${campaignStars} étoiles`}>
+          <Star size={18} className="fill-sun text-sun" aria-hidden />
+          {campaignStars}
+        </span>
+      </button>
+
+      <section className="relative w-full max-w-2xl rounded-card border-2 border-sun bg-surface text-ink p-4 shadow-[0_6px_0_#07050d] sm:p-5">
+        <h2 className="font-display text-2xl font-extrabold">Jeu libre</h2>
+        <p className="text-sm font-semibold text-muted">Une nouvelle énigme à chaque manche.</p>
+        <h2 id="level-label" className="mt-4 font-display text-xl font-extrabold">
           Niveau
         </h2>
         <div role="radiogroup" aria-labelledby="level-label" className="mt-2 grid grid-cols-4 gap-1.5 sm:gap-2">

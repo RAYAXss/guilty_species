@@ -110,7 +110,7 @@ Only one culprit should remain.
 
 Every character lives in one of six regions of Fantolia: Forêt mystique, Montagnes glacées, Désert aride, Marais des brumes, Plaines dorées and Terres d'ombre.
 
-Two characters are **neighbors** when their regions share a border (never the same region). Clues such as *"Un de mes voisins est coupable"* or *"Aucun voisin de Gorak n'est coupable"* rely on this. The **Carte** button opens the map: pick a creature to highlight its region and the bordering ones.
+Two characters are **neighbors** when their regions share a border (never the same region). Clues such as *"Un de mes voisins est coupable"* or *"Aucun voisin de Gorak n'est coupable"* rely on this. The **Carte** button (or the Tab key) opens the map: pick a creature to highlight its region and the bordering ones. Neighbor clues, the map and its button only appear from *normal* (`neighborClues` in `DIFFICULTY_PARAMS`).
 
 Borders are domain data (`src/domain/world/fantolia.ts`); the drawing lives in `src/ui/tokens/fantolia.ts`.
 
@@ -120,6 +120,15 @@ Borders are domain data (`src/domain/world/fantolia.ts`); the drawing lives in `
 - Count rules: exact (`Exactement 2 personnages disent la vérité`, `Exactement 1 personnage ment`) or ranges from *difficile* (`1 ou 2 personnages disent la vérité`).
 - Culprit count, from *expert*: `Il y a 2 coupables` or `Il y a 1 ou 2 coupables`. Without this rule there is exactly one culprit. With several culprits, "culprit" predicates mean "at least one culprit" (and `expected: false` means none).
 - Levels add creatures, not clues: still one statement per character and one count rule. *Difficile* and *expert* also reject puzzles whose wrong hypotheses are all obviously off (`analyzePuzzle().nearMisses`, tuned in `DIFFICULTY_PARAMS`); uniqueness is never relaxed.
+
+## 🧭 Game modes
+
+- **Jeu libre**: a new generated puzzle every round; winning moves to the next difficulty.
+- **Campagne — Le Cœur de Fantolia**: 18 fixed levels in 6 chapters, one per region, travelling along the borders (Forêt → Marais → Plaines → Montagnes → Désert → Terres d'ombre). Each chapter has a lore intro and each level a short case. A level opens once the previous one is won; stars come from attempts left (first try = 3, second = 2). Progress is saved in `localStorage` (`fantolia.campaign.v1`).
+
+Campaign puzzles are **frozen data** (`src/domain/campaign/frozen-puzzles.ts`): characters, predicates and rules only. The text is re-rendered from the predicates and the answer comes from the solver, so generator changes never alter a level. Tests check that every level has exactly one solution, uses no neighbor clue below *normal*, and only names characters present in it.
+
+To add or re-bake a level: run `generatePuzzle({ difficulty, seed, characterCount })` once from a throwaway script, paste `characterIds`, `statements` (`characterId` + `predicate`) and `rules` into `frozen-puzzles.ts`, then add its entry to `LEVELS` in `campaign.ts`.
 
 ## 🧩 Puzzle Engine
 
