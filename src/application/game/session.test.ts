@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gameReducer, initialState, nextDifficulty, type GameState } from "./session";
+import { gameReducer, initialState, MAX_ATTEMPTS, nextDifficulty, type GameState } from "./session";
 
 const started = (over: Partial<GameState> = {}): GameState =>
   gameReducer({ ...initialState, ...over }, { type: "start", seed: 7 });
@@ -119,5 +119,39 @@ describe("game session", () => {
 
   it("caps difficulty at expert", () => {
     expect(nextDifficulty("expert")).toBe("expert");
+  });
+
+  describe("campaign", () => {
+    const level = (levelId: string, over: Partial<GameState> = {}) =>
+      gameReducer({ ...initialState, ...over }, { type: "startLevel", levelId });
+
+    it("plays the same frozen puzzle every time", () => {
+      const a = level("foret-1");
+      expect(a.mode).toBe("campaign");
+      expect(a.round?.puzzle).toEqual(level("foret-1").round?.puzzle);
+    });
+
+    it("refuses a locked level", () => {
+      expect(level("foret-2")).toEqual(initialState);
+    });
+
+    it("records stars on a win and returns to the campaign without touching free play", () => {
+      const s = level("foret-1", { difficulty: "normal", characterCount: 5 });
+      const done = gameReducer(accuse(s, ...s.round!.culpritIds), { type: "dismissFeedback" });
+      expect(done.screen).toBe("campaign");
+      expect(done.progress["foret-1"]).toBe(3);
+      expect(done.difficulty).toBe("normal");
+      expect(done.characterCount).toBe(5);
+      expect(level("foret-2", { progress: done.progress }).round).not.toBeNull();
+    });
+
+    it("keeps progress unchanged on a loss, and quitting goes back to the campaign", () => {
+      let s = level("foret-1");
+      for (const id of innocents(s).slice(0, MAX_ATTEMPTS)) s = gameReducer(accuse(s, id), { type: "dismissFeedback" });
+      expect(s.screen).toBe("campaign");
+      expect(s.lastResult).toBe("lost");
+      expect(s.progress).toEqual({});
+      expect(gameReducer(level("foret-1"), { type: "quit" }).screen).toBe("campaign");
+    });
   });
 });

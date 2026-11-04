@@ -5,7 +5,6 @@ import { evaluatePredicate, type LogicalPredicate } from "../statements/predicat
 import { renderStatement } from "../statements/render";
 import { neighborsOf } from "../world/fantolia";
 import { evaluateRule, type Rule } from "../rules/rule";
-import { neighborsOf } from "../world/fantolia";
 import { solve } from "../solver/solve";
 import { createRng, pickOne, randomInt, shuffle, type Rng } from "../../infrastructure/random/rng";
 import { weightedSample } from "../../infrastructure/random/weighted";
@@ -165,7 +164,8 @@ function buildStatements(rng: Rng, params: DifficultyParams, characters: Charact
   const statements: Statement[] = [];
   for (const speaker of characters) {
     const tellsTruth = world.assignments[speaker.id] === true;
-    const atoms = atomicCandidates(characters, speaker.id);
+    let atoms = atomicCandidates(characters, speaker.id);
+    if (!params.neighborClues) atoms = atoms.filter((p) => p.type !== "culpritNeighborOf");
     for (let i = 0; i < params.statementsPerCharacter; i++) {
       // Truthful speakers: every statement true. Liars: the first one must be false.
       const mustBe: boolean | null = tellsTruth ? true : i === 0 ? false : null;
@@ -188,7 +188,7 @@ function buildStatements(rng: Rng, params: DifficultyParams, characters: Charact
         id: `${speaker.id}-s${i}`,
         characterId: speaker.id,
         predicate,
-        text: renderStatement(predicate, characters, speaker.id),
+        text: renderStatement(predicate, characters, { speakerId: speaker.id, multiCulprit }),
       });
     }
   }
@@ -205,7 +205,7 @@ function rulesOnlySuspects(puzzle: Puzzle, minNeeded: number): number {
     for (let mask = 0; mask < 1 << n; mask++) {
       const assignments: Record<string, boolean> = {};
       characters.forEach((c, i) => { assignments[c.id] = (mask & (1 << i)) !== 0; });
-      const world: Solution = { culpritId: culprit.id, assignments };
+      const world: Solution = { culpritIds: [culprit.id], assignments };
       if (rules.every((r) => evaluateRule(r, characters, world))) { possible = true; break; }
     }
     if (possible && ++suspects >= minNeeded) return suspects;

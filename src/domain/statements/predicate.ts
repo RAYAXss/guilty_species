@@ -34,11 +34,11 @@ export function evaluatePredicate(
     case "culpritIs":
       return world.culpritIds.includes(predicate.characterId) === predicate.expected;
     case "culpritAlignment":
-      return (findCharacter(characters, world.culpritId).alignment === predicate.alignment) === predicate.expected;
+      return world.culpritIds.some((id) => findCharacter(characters, id).alignment === predicate.alignment) === predicate.expected;
     case "culpritSpecies":
-      return (findCharacter(characters, world.culpritId).species === predicate.species) === predicate.expected;
+      return world.culpritIds.some((id) => findCharacter(characters, id).species === predicate.species) === predicate.expected;
     case "culpritNeighborOf":
-      return neighborsOf(characters, predicate.characterId).some((n) => n.id === world.culpritId) === predicate.expected;
+      return neighborsOf(characters, predicate.characterId).some((n) => world.culpritIds.includes(n.id)) === predicate.expected;
     case "not":
       return !evaluatePredicate(predicate.operand, characters, world);
     case "and":

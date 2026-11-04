@@ -20,7 +20,16 @@ describe("statement rendering", () => {
   it("speaks in the first person about one's own neighbors", () => {
     const p = { type: "culpritNeighborOf", characterId: "elara", expected: true } as const;
     expect(renderStatement(p, chars, { speakerId: "elara" })).toBe("Un de mes voisins est coupable.");
-    expect(renderStatement(p, chars, { speakerId: "gorak" })).toBe("Un voisin de Elara est coupable.");
+    expect(renderStatement(p, chars, { speakerId: "gorak" })).toBe("Un voisin d'Elara est coupable.");
+  });
+
+  it("negates neighbor clues with « Aucun », never « Un … n'est pas »", () => {
+    const p = { type: "culpritNeighborOf", characterId: "elara", expected: false } as const;
+    for (const multiCulprit of [false, true]) {
+      expect(renderStatement(p, chars, { speakerId: "elara", multiCulprit })).toBe("Aucun de mes voisins n'est coupable.");
+      expect(renderStatement(p, chars, { speakerId: "gorak", multiCulprit })).toBe("Aucun voisin d'Elara n'est coupable.");
+    }
+    expect(renderStatement({ ...p, expected: true }, chars, { speakerId: "elara", multiCulprit: true })).toBe("Au moins un de mes voisins est coupable.");
   });
 
   it("keeps composite clues readable", () => {

@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ArrowRight, RotateCcw, Search } from "lucide-react";
+import { ArrowRight, RotateCcw, Search, Star } from "lucide-react";
 import type { Character } from "../../domain/characters/types";
 import type { Difficulty } from "../../domain/puzzle/types";
 import type { Feedback } from "../../application/game/session";
@@ -13,10 +13,15 @@ interface Props {
   characters: Character[];
   difficulty: Difficulty;
   nextDifficulty: Difficulty;
+  /** Campaign rounds: stars earned on a win (free play passes nothing). */
+  campaignStars?: number;
+  /** Last campaign level: a win ends the story. */
+  finale?: boolean;
   onContinue: () => void;
 }
 
-export function ResultDialog({ feedback, characters, difficulty, nextDifficulty, onContinue }: Props) {
+export function ResultDialog({ feedback, characters, difficulty, nextDifficulty, campaignStars, finale, onContinue }: Props) {
+  const campaign = campaignStars !== undefined;
   const find = (id: string) => characters.find((c) => c.id === id);
   const culprits = feedback.kind === "retry" ? [] : feedback.culpritIds.map(find).filter((c): c is Character => !!c);
   const accused = feedback.kind === "retry" ? feedback.accusedIds.map(find).filter((c): c is Character => !!c) : [];
@@ -39,15 +44,19 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
     },
     won: {
       title: culprits.length > 1 ? "Coupables démasqués !" : "Coupable démasqué !",
-      body: `C'était bien ${culpritNames}. Niveau suivant : ${nextDifficulty}.`,
-      cta: "Retour au menu",
+      body: !campaign
+        ? `C'était bien ${culpritNames}. Niveau suivant : ${nextDifficulty}.`
+        : finale
+          ? `C'était bien ${culpritNames}. Le Cœur est retrouvé : la paix revient sur Fantolia.`
+          : `C'était bien ${culpritNames}. La piste continue…`,
+      cta: campaign ? "Retour à la carte" : "Retour au menu",
       Icon: ArrowRight,
       accent: "bg-pacifiste-soft",
     },
     lost: {
       title: "Manche perdue",
-      body: `${culprits.length > 1 ? "Les coupables étaient" : "Le coupable était"} ${culpritNames}. Tu retentes au niveau ${difficulty}.`,
-      cta: "Retour au menu",
+      body: `${culprits.length > 1 ? "Les coupables étaient" : "Le coupable était"} ${culpritNames}. ${campaign ? "Tu peux retenter cette enquête." : `Tu retentes au niveau ${difficulty}.`}`,
+      cta: campaign ? "Retour à la carte" : "Retour au menu",
       Icon: RotateCcw,
       accent: "bg-belliqueux-soft",
     },
@@ -89,6 +98,20 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
         <h2 id="result-title" className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
           {copy.title}
         </h2>
+        {feedback.kind === "won" && campaign && (
+          <p className="mt-2 flex justify-center gap-1" aria-label={`${campaignStars} étoiles sur 3`}>
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ ...motionTokens.spring.lively, delay: 0.2 + i * 0.15 }}
+              >
+                <Star aria-hidden className={`size-8 ${i < campaignStars ? "fill-sun text-sun" : "text-ink/25"}`} />
+              </motion.span>
+            ))}
+          </p>
+        )}
         <p id="result-body" className="mx-auto mt-2 max-w-xs text-base sm:text-lg font-semibold text-muted">
           {copy.body}
         </p>
