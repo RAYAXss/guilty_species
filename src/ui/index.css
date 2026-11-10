@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  /* Night sky behind, parchment panels in front, gold for structure. */
-  --color-bg: #120f1c;
+  /* Torch-lit oak table behind, parchment panels in front, gold for structure. */
+  --color-bg: #140e09;
   --color-surface: #f2e6c9;
   --color-inset: #e4d3ab;
   --color-ink: #1f1830;
   --color-muted: #6a5b4d;
-  --color-dim: #b3a9cc;
+  --color-dim: #cbb38a;
   --color-primary: #8f2d3c;
   --color-sun: #d1a03a;
   --color-success: #2f7d5b;
@@ -30,10 +30,14 @@ body {
   font-family: var(--font-body);
   font-size: 1.05rem;
   color: var(--color-surface);
+  /* Tabletop: torch glow, vignette, oak planks, fine grain. No image file, so nothing to load. */
   background:
-    radial-gradient(60rem 30rem at 12% -10%, #2d2154 0%, transparent 60%),
-    radial-gradient(50rem 30rem at 100% 0%, #43192f 0%, transparent 55%),
-    var(--color-bg);
+    radial-gradient(42rem 26rem at 50% -6%, rgba(232, 150, 62, 0.32) 0%, transparent 70%),
+    radial-gradient(30rem 22rem at 105% 105%, rgba(143, 45, 60, 0.28) 0%, transparent 70%),
+    radial-gradient(120% 90% at 50% 40%, transparent 45%, rgba(0, 0, 0, 0.78) 100%),
+    repeating-linear-gradient(90deg, transparent 0 7.6rem, rgba(0, 0, 0, 0.55) 7.6rem 7.75rem, rgba(255, 210, 150, 0.05) 7.75rem 7.85rem),
+    repeating-linear-gradient(90deg, rgba(255, 200, 140, 0.025) 0 3px, transparent 3px 11px, rgba(0, 0, 0, 0.06) 11px 13px, transparent 13px 23px),
+    linear-gradient(180deg, #3a2516 0%, #2a1a0f 55%, var(--color-bg) 100%);
   background-attachment: fixed;
 }
 :focus-visible { outline: 3px solid var(--color-sun); outline-offset: 3px; }

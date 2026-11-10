@@ -1,6 +1,6 @@
 import type { FrozenPuzzle } from "./types";
 
-// Baked once from the generator, then frozen: campaign levels never change when the generator does.
+// Baked once from the generator (scripts/bake-campaign.ts), then frozen: campaign levels never change when the generator does.
 export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
   {
     "id": "foret-1",
@@ -148,41 +148,44 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "difficulty": "normal",
     "characterIds": [
       "mira",
-      "aldric",
       "pip",
+      "aldric",
       "varek"
     ],
     "statements": [
       {
         "characterId": "mira",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "aldric",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "aldric",
-        "predicate": {
-          "type": "culpritAlignment",
-          "alignment": "pacifiste",
+          "type": "characterTruth",
+          "characterId": "pip",
           "expected": false
         }
       },
       {
         "characterId": "pip",
         "predicate": {
-          "type": "culpritIs",
-          "characterId": "aldric",
-          "expected": true
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 7,
+          "expected": false
+        }
+      },
+      {
+        "characterId": "aldric",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 10,
+          "expected": false
         }
       },
       {
         "characterId": "varek",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "varek",
-          "expected": true
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 6,
+          "expected": false
         }
       }
     ],
@@ -197,58 +200,61 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "marais-2",
     "difficulty": "normal",
     "characterIds": [
-      "aldric",
-      "ondine",
-      "pip",
+      "gorak",
       "varek",
-      "gorak"
+      "aldric",
+      "pip",
+      "ondine"
     ],
     "statements": [
       {
+        "characterId": "gorak",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 7,
+          "expected": true
+        }
+      },
+      {
+        "characterId": "varek",
+        "predicate": {
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
+          "characterId": "pip",
+          "expected": true
+        }
+      },
+      {
         "characterId": "aldric",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "pip",
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 10,
+          "expected": false
+        }
+      },
+      {
+        "characterId": "pip",
+        "predicate": {
+          "type": "characterTruth",
+          "characterId": "varek",
           "expected": false
         }
       },
       {
         "characterId": "ondine",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "aldric",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "pip",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "varek",
-          "expected": false
-        }
-      },
-      {
-        "characterId": "varek",
-        "predicate": {
-          "type": "characterTruth",
-          "characterId": "aldric",
-          "expected": false
-        }
-      },
-      {
-        "characterId": "gorak",
-        "predicate": {
           "type": "characterTruth",
           "characterId": "varek",
-          "expected": true
+          "expected": false
         }
       }
     ],
     "rules": [
       {
-        "type": "liarCount",
-        "count": 3
+        "type": "truthCount",
+        "count": 4
       }
     ]
   },
@@ -256,57 +262,60 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "marais-3",
     "difficulty": "normal",
     "characterIds": [
-      "karn",
-      "gorak",
       "ondine",
+      "varek",
       "brumm",
-      "varek"
+      "karn",
+      "gorak"
     ],
     "statements": [
       {
-        "characterId": "karn",
-        "predicate": {
-          "type": "culpritIs",
-          "characterId": "varek",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "gorak",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "karn",
-          "expected": true
-        }
-      },
-      {
         "characterId": "ondine",
         "predicate": {
-          "type": "characterTruth",
+          "type": "culpritStatAbove",
+          "stat": "strength",
           "characterId": "karn",
           "expected": true
-        }
-      },
-      {
-        "characterId": "brumm",
-        "predicate": {
-          "type": "culpritIs",
-          "characterId": "karn",
-          "expected": false
         }
       },
       {
         "characterId": "varek",
         "predicate": {
-          "type": "culpritNeighborOf",
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 4,
+          "expected": false
+        }
+      },
+      {
+        "characterId": "brumm",
+        "predicate": {
+          "type": "culpritAlignment",
+          "alignment": "pacifiste",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "karn",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 4,
+          "expected": false
+        }
+      },
+      {
+        "characterId": "gorak",
+        "predicate": {
+          "type": "culpritIs",
           "characterId": "ondine",
-          "expected": true
+          "expected": false
         }
       }
     ],
     "rules": [
       {
-        "type": "liarCount",
+        "type": "truthCount",
         "count": 4
       }
     ]
@@ -315,17 +324,26 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "plaines-1",
     "difficulty": "normal",
     "characterIds": [
+      "brumm",
       "gorak",
       "elara",
-      "aldric",
       "mira",
-      "brumm"
+      "aldric"
     ],
     "statements": [
       {
+        "characterId": "brumm",
+        "predicate": {
+          "type": "characterTruth",
+          "characterId": "gorak",
+          "expected": false
+        }
+      },
+      {
         "characterId": "gorak",
         "predicate": {
-          "type": "culpritNeighborOf",
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
           "characterId": "brumm",
           "expected": true
         }
@@ -333,40 +351,34 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
       {
         "characterId": "elara",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "elara",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "aldric",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "mira",
-          "expected": true
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 6,
+          "expected": false
         }
       },
       {
         "characterId": "mira",
         "predicate": {
           "type": "culpritIs",
-          "characterId": "brumm",
-          "expected": false
+          "characterId": "gorak",
+          "expected": true
         }
       },
       {
-        "characterId": "brumm",
+        "characterId": "aldric",
         "predicate": {
-          "type": "culpritAlignment",
-          "alignment": "vengeur",
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
+          "characterId": "aldric",
           "expected": true
         }
       }
     ],
     "rules": [
       {
-        "type": "truthCount",
-        "count": 1
+        "type": "liarCount",
+        "count": 2
       }
     ]
   },
@@ -374,39 +386,52 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "plaines-2",
     "difficulty": "difficile",
     "characterIds": [
-      "aldric",
       "pip",
-      "elara",
       "ondine",
-      "brumm"
+      "aldric",
+      "brumm",
+      "elara"
     ],
     "statements": [
       {
-        "characterId": "aldric",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "pip",
-          "expected": true
-        }
-      },
-      {
         "characterId": "pip",
         "predicate": {
-          "type": "culpritIs",
-          "characterId": "aldric",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "elara",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "brumm",
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 6,
           "expected": false
         }
       },
       {
         "characterId": "ondine",
+        "predicate": {
+          "type": "culpritStatAbove",
+          "stat": "strength",
+          "characterId": "ondine",
+          "expected": true
+        }
+      },
+      {
+        "characterId": "aldric",
+        "predicate": {
+          "type": "or",
+          "operands": [
+            {
+              "type": "culpritStatAtLeast",
+              "stat": "strength",
+              "value": 4,
+              "expected": true
+            },
+            {
+              "type": "characterTruth",
+              "characterId": "pip",
+              "expected": false
+            }
+          ]
+        }
+      },
+      {
+        "characterId": "brumm",
         "predicate": {
           "type": "culpritIs",
           "characterId": "elara",
@@ -414,11 +439,11 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
         }
       },
       {
-        "characterId": "brumm",
+        "characterId": "elara",
         "predicate": {
           "type": "culpritIs",
-          "characterId": "pip",
-          "expected": false
+          "characterId": "ondine",
+          "expected": true
         }
       }
     ],
@@ -434,26 +459,33 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "difficulty": "difficile",
     "characterIds": [
       "aldric",
-      "pip",
-      "elara",
       "sombrelame",
+      "elara",
       "thalion",
+      "pip",
       "ondine"
     ],
     "statements": [
       {
         "characterId": "aldric",
         "predicate": {
-          "type": "not",
-          "operand": {
-            "type": "culpritIs",
-            "characterId": "aldric",
-            "expected": false
-          }
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 8,
+          "expected": false
         }
       },
       {
-        "characterId": "pip",
+        "characterId": "sombrelame",
+        "predicate": {
+          "type": "culpritStatAbove",
+          "stat": "strength",
+          "characterId": "pip",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "elara",
         "predicate": {
           "type": "culpritAlignment",
           "alignment": "vengeur",
@@ -461,48 +493,36 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
         }
       },
       {
-        "characterId": "elara",
+        "characterId": "thalion",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "aldric",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "sombrelame",
-        "predicate": {
-          "type": "culpritNeighborOf",
+          "type": "culpritIs",
           "characterId": "ondine",
           "expected": true
         }
       },
       {
-        "characterId": "thalion",
+        "characterId": "pip",
         "predicate": {
-          "type": "not",
-          "operand": {
-            "type": "culpritIs",
-            "characterId": "ondine",
-            "expected": false
-          }
+          "type": "culpritStatAbove",
+          "stat": "strength",
+          "characterId": "elara",
+          "expected": false
         }
       },
       {
         "characterId": "ondine",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "thalion",
-          "expected": false
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 4,
+          "expected": true
         }
       }
     ],
     "rules": [
       {
-        "type": "truthCountOneOf",
-        "counts": [
-          1,
-          2
-        ]
+        "type": "liarCount",
+        "count": 2
       }
     ]
   },
@@ -511,79 +531,70 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "difficulty": "difficile",
     "characterIds": [
       "thalion",
-      "ondine",
-      "neris",
       "brumm",
       "pip",
+      "ondine",
+      "neris",
       "karn"
     ],
     "statements": [
       {
         "characterId": "thalion",
         "predicate": {
-          "type": "characterTruth",
-          "characterId": "neris",
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
+          "characterId": "pip",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "brumm",
+        "predicate": {
+          "type": "culpritAlignment",
+          "alignment": "belliqueux",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "pip",
+        "predicate": {
+          "type": "culpritAlignment",
+          "alignment": "belliqueux",
           "expected": false
         }
       },
       {
         "characterId": "ondine",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "ondine",
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 4,
           "expected": true
         }
       },
       {
         "characterId": "neris",
         "predicate": {
-          "type": "culpritIs",
-          "characterId": "ondine",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "brumm",
-        "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritIs",
-              "characterId": "pip",
-              "expected": false
-            },
-            {
-              "type": "culpritAlignment",
-              "alignment": "vengeur",
-              "expected": false
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "pip",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "karn",
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 9,
           "expected": true
         }
       },
       {
         "characterId": "karn",
         "predicate": {
-          "type": "culpritAlignment",
-          "alignment": "vengeur",
+          "type": "culpritStatAbove",
+          "stat": "strength",
+          "characterId": "neris",
           "expected": true
         }
       }
     ],
     "rules": [
       {
-        "type": "truthCountOneOf",
-        "counts": [
-          4,
-          5
-        ]
+        "type": "truthCount",
+        "count": 2
       }
     ]
   },
@@ -591,45 +602,36 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "montagnes-2",
     "difficulty": "difficile",
     "characterIds": [
-      "thalion",
-      "brumm",
       "elara",
+      "mira",
+      "thalion",
       "sombrelame",
-      "pip",
-      "mira"
+      "brumm",
+      "pip"
     ],
     "statements": [
       {
-        "characterId": "thalion",
+        "characterId": "elara",
         "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritAlignment",
-              "alignment": "pacifiste",
-              "expected": true
-            },
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "sombrelame",
-              "expected": true
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "brumm",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "mira",
+          "type": "culpritAlignment",
+          "alignment": "belliqueux",
           "expected": true
         }
       },
       {
-        "characterId": "elara",
+        "characterId": "mira",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "sombrelame",
+          "type": "culpritAlignment",
+          "alignment": "pacifiste",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "thalion",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 10,
           "expected": true
         }
       },
@@ -637,24 +639,29 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
         "characterId": "sombrelame",
         "predicate": {
           "type": "characterTruth",
-          "characterId": "brumm",
-          "expected": false
+          "characterId": "elara",
+          "expected": true
+        }
+      },
+      {
+        "characterId": "brumm",
+        "predicate": {
+          "type": "not",
+          "operand": {
+            "type": "culpritStatAtLeast",
+            "stat": "strength",
+            "value": 4,
+            "expected": false
+          }
         }
       },
       {
         "characterId": "pip",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "mira",
-          "expected": false
-        }
-      },
-      {
-        "characterId": "mira",
-        "predicate": {
-          "type": "culpritNeighborOf",
+          "type": "culpritStatAbove",
+          "stat": "strength",
           "characterId": "elara",
-          "expected": true
+          "expected": false
         }
       }
     ],
@@ -672,46 +679,54 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "montagnes-3",
     "difficulty": "expert",
     "characterIds": [
-      "gorak",
       "elara",
       "mira",
-      "varek",
+      "gorak",
       "neris",
+      "varek",
       "ondine"
     ],
     "statements": [
       {
-        "characterId": "gorak",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "varek",
-          "expected": true
-        }
-      },
-      {
         "characterId": "elara",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "neris",
+          "type": "culpritStatAbove",
+          "stat": "strength",
+          "characterId": "gorak",
           "expected": false
         }
       },
       {
         "characterId": "mira",
         "predicate": {
-          "type": "and",
-          "operands": [
-            {
-              "type": "culpritIs",
-              "characterId": "neris",
-              "expected": false
-            },
-            {
-              "type": "culpritAlignment",
-              "alignment": "belliqueux",
-              "expected": false
-            }
-          ]
+          "type": "not",
+          "operand": {
+            "type": "culpritStatAbove",
+            "stat": "strength",
+            "characterId": "ondine",
+            "expected": false
+          }
+        }
+      },
+      {
+        "characterId": "gorak",
+        "predicate": {
+          "type": "not",
+          "operand": {
+            "type": "culpritStatAbove",
+            "stat": "intelligence",
+            "characterId": "mira",
+            "expected": true
+          }
+        }
+      },
+      {
+        "characterId": "neris",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 10,
+          "expected": false
         }
       },
       {
@@ -723,36 +738,29 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
         }
       },
       {
-        "characterId": "neris",
+        "characterId": "ondine",
         "predicate": {
           "type": "and",
           "operands": [
             {
-              "type": "culpritIs",
-              "characterId": "elara",
-              "expected": false
+              "type": "culpritStatAtLeast",
+              "stat": "strength",
+              "value": 3,
+              "expected": true
             },
             {
-              "type": "culpritIs",
+              "type": "characterTruth",
               "characterId": "mira",
               "expected": false
             }
           ]
-        }
-      },
-      {
-        "characterId": "ondine",
-        "predicate": {
-          "type": "culpritIs",
-          "characterId": "neris",
-          "expected": false
         }
       }
     ],
     "rules": [
       {
         "type": "liarCount",
-        "count": 1
+        "count": 2
       }
     ]
   },
@@ -760,89 +768,103 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "desert-1",
     "difficulty": "expert",
     "characterIds": [
+      "thalion",
       "karn",
-      "mira",
       "elara",
       "brumm",
-      "thalion",
+      "mira",
       "neris"
     ],
     "statements": [
       {
-        "characterId": "karn",
+        "characterId": "thalion",
         "predicate": {
-          "type": "or",
+          "type": "and",
           "operands": [
             {
-              "type": "culpritNeighborOf",
-              "characterId": "elara",
-              "expected": true
+              "type": "culpritIs",
+              "characterId": "karn",
+              "expected": false
             },
             {
-              "type": "culpritNeighborOf",
-              "characterId": "karn",
-              "expected": true
+              "type": "culpritStatAbove",
+              "stat": "intelligence",
+              "characterId": "mira",
+              "expected": false
             }
           ]
         }
       },
       {
-        "characterId": "mira",
+        "characterId": "karn",
         "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritAlignment",
-              "alignment": "belliqueux",
-              "expected": true
-            },
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "brumm",
-              "expected": true
-            }
-          ]
+          "type": "culpritIs",
+          "characterId": "brumm",
+          "expected": true
         }
       },
       {
         "characterId": "elara",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "thalion",
-          "expected": true
+          "type": "and",
+          "operands": [
+            {
+              "type": "culpritStatAbove",
+              "stat": "intelligence",
+              "characterId": "mira",
+              "expected": true
+            },
+            {
+              "type": "culpritStatAbove",
+              "stat": "strength",
+              "characterId": "thalion",
+              "expected": true
+            }
+          ]
         }
       },
       {
         "characterId": "brumm",
         "predicate": {
-          "type": "culpritIs",
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
           "characterId": "elara",
           "expected": false
         }
       },
       {
-        "characterId": "thalion",
+        "characterId": "mira",
         "predicate": {
-          "type": "not",
-          "operand": {
-            "type": "culpritIs",
-            "characterId": "mira",
-            "expected": false
-          }
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
+          "characterId": "mira",
+          "expected": true
         }
       },
       {
         "characterId": "neris",
         "predicate": {
-          "type": "characterTruth",
-          "characterId": "brumm",
-          "expected": true
+          "type": "and",
+          "operands": [
+            {
+              "type": "culpritStatAbove",
+              "stat": "intelligence",
+              "characterId": "mira",
+              "expected": true
+            },
+            {
+              "type": "culpritStatAtLeast",
+              "stat": "strength",
+              "value": 10,
+              "expected": false
+            }
+          ]
         }
       }
     ],
     "rules": [
       {
-        "type": "liarCount",
+        "type": "truthCount",
         "count": 1
       }
     ]
@@ -851,28 +873,56 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "desert-2",
     "difficulty": "expert",
     "characterIds": [
-      "brumm",
-      "elara",
-      "karn",
       "aldric",
       "thalion",
+      "sombrelame",
+      "elara",
       "pip",
-      "sombrelame"
+      "brumm",
+      "karn"
     ],
     "statements": [
       {
-        "characterId": "brumm",
+        "characterId": "aldric",
         "predicate": {
-          "type": "and",
+          "type": "or",
           "operands": [
             {
-              "type": "culpritNeighborOf",
-              "characterId": "thalion",
+              "type": "characterTruth",
+              "characterId": "karn",
               "expected": false
             },
             {
-              "type": "culpritNeighborOf",
-              "characterId": "sombrelame",
+              "type": "culpritStatAtLeast",
+              "stat": "intelligence",
+              "value": 8,
+              "expected": false
+            }
+          ]
+        }
+      },
+      {
+        "characterId": "thalion",
+        "predicate": {
+          "type": "culpritIs",
+          "characterId": "pip",
+          "expected": true
+        }
+      },
+      {
+        "characterId": "sombrelame",
+        "predicate": {
+          "type": "or",
+          "operands": [
+            {
+              "type": "culpritStatAtLeast",
+              "stat": "intelligence",
+              "value": 9,
+              "expected": true
+            },
+            {
+              "type": "culpritAlignment",
+              "alignment": "pacifiste",
               "expected": false
             }
           ]
@@ -881,89 +931,43 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
       {
         "characterId": "elara",
         "predicate": {
-          "type": "and",
-          "operands": [
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "karn",
-              "expected": true
-            },
-            {
-              "type": "culpritIs",
-              "characterId": "thalion",
-              "expected": false
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "karn",
-        "predicate": {
-          "type": "not",
-          "operand": {
-            "type": "culpritIs",
-            "characterId": "karn",
-            "expected": false
-          }
-        }
-      },
-      {
-        "characterId": "aldric",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "thalion",
-          "expected": false
-        }
-      },
-      {
-        "characterId": "thalion",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "sombrelame",
+          "type": "culpritAlignment",
+          "alignment": "pacifiste",
           "expected": true
         }
       },
       {
         "characterId": "pip",
         "predicate": {
-          "type": "and",
-          "operands": [
-            {
-              "type": "culpritIs",
-              "characterId": "brumm",
-              "expected": true
-            },
-            {
-              "type": "culpritIs",
-              "characterId": "elara",
-              "expected": true
-            }
-          ]
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
+          "characterId": "aldric",
+          "expected": true
         }
       },
       {
-        "characterId": "sombrelame",
+        "characterId": "brumm",
         "predicate": {
-          "type": "and",
-          "operands": [
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "karn",
-              "expected": true
-            },
-            {
-              "type": "characterTruth",
-              "characterId": "aldric",
-              "expected": false
-            }
-          ]
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 10,
+          "expected": true
+        }
+      },
+      {
+        "characterId": "karn",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 9,
+          "expected": true
         }
       }
     ],
     "rules": [
       {
-        "type": "liarCount",
-        "count": 6
+        "type": "truthCount",
+        "count": 4
       }
     ]
   },
@@ -971,53 +975,20 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "desert-3",
     "difficulty": "expert",
     "characterIds": [
-      "elara",
-      "pip",
       "thalion",
-      "mira",
       "ondine",
+      "pip",
+      "elara",
+      "mira",
       "aldric",
       "sombrelame"
     ],
     "statements": [
       {
-        "characterId": "elara",
-        "predicate": {
-          "type": "culpritIs",
-          "characterId": "pip",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "pip",
-        "predicate": {
-          "type": "culpritIs",
-          "characterId": "thalion",
-          "expected": true
-        }
-      },
-      {
         "characterId": "thalion",
         "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "characterTruth",
-              "characterId": "sombrelame",
-              "expected": true
-            },
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "pip",
-              "expected": true
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "mira",
-        "predicate": {
-          "type": "culpritNeighborOf",
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
           "characterId": "elara",
           "expected": true
         }
@@ -1025,45 +996,80 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
       {
         "characterId": "ondine",
         "predicate": {
-          "type": "not",
-          "operand": {
-            "type": "culpritIs",
-            "characterId": "thalion",
-            "expected": true
-          }
+          "type": "culpritStatAtLeast",
+          "stat": "strength",
+          "value": 7,
+          "expected": false
         }
       },
       {
-        "characterId": "aldric",
+        "characterId": "pip",
         "predicate": {
           "type": "or",
           "operands": [
             {
-              "type": "culpritNeighborOf",
-              "characterId": "pip",
+              "type": "culpritAlignment",
+              "alignment": "pacifiste",
               "expected": false
             },
             {
-              "type": "characterTruth",
-              "characterId": "thalion",
-              "expected": false
+              "type": "culpritStatAbove",
+              "stat": "intelligence",
+              "characterId": "mira",
+              "expected": true
             }
           ]
         }
       },
       {
-        "characterId": "sombrelame",
+        "characterId": "elara",
+        "predicate": {
+          "type": "or",
+          "operands": [
+            {
+              "type": "culpritStatAbove",
+              "stat": "intelligence",
+              "characterId": "pip",
+              "expected": true
+            },
+            {
+              "type": "culpritIs",
+              "characterId": "aldric",
+              "expected": true
+            }
+          ]
+        }
+      },
+      {
+        "characterId": "mira",
         "predicate": {
           "type": "characterTruth",
           "characterId": "thalion",
           "expected": false
         }
+      },
+      {
+        "characterId": "aldric",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 7,
+          "expected": true
+        }
+      },
+      {
+        "characterId": "sombrelame",
+        "predicate": {
+          "type": "culpritAlignment",
+          "alignment": "vengeur",
+          "expected": true
+        }
       }
     ],
     "rules": [
       {
-        "type": "truthCount",
-        "count": 2
+        "type": "liarCount",
+        "count": 1
       }
     ]
   },
@@ -1071,51 +1077,154 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "ombres-1",
     "difficulty": "expert",
     "characterIds": [
-      "thalion",
-      "pip",
-      "mira",
-      "ondine",
       "aldric",
+      "mira",
       "brumm",
-      "sombrelame"
+      "sombrelame",
+      "pip",
+      "thalion",
+      "ondine"
     ],
     "statements": [
       {
-        "characterId": "thalion",
+        "characterId": "aldric",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "aldric",
+          "type": "and",
+          "operands": [
+            {
+              "type": "culpritStatAbove",
+              "stat": "strength",
+              "characterId": "sombrelame",
+              "expected": false
+            },
+            {
+              "type": "characterTruth",
+              "characterId": "thalion",
+              "expected": true
+            }
+          ]
+        }
+      },
+      {
+        "characterId": "mira",
+        "predicate": {
+          "type": "culpritAlignment",
+          "alignment": "pacifiste",
           "expected": true
+        }
+      },
+      {
+        "characterId": "brumm",
+        "predicate": {
+          "type": "culpritIs",
+          "characterId": "brumm",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "sombrelame",
+        "predicate": {
+          "type": "culpritIs",
+          "characterId": "ondine",
+          "expected": false
         }
       },
       {
         "characterId": "pip",
         "predicate": {
           "type": "culpritIs",
-          "characterId": "sombrelame",
+          "characterId": "thalion",
           "expected": true
         }
       },
       {
-        "characterId": "mira",
+        "characterId": "thalion",
         "predicate": {
-          "type": "not",
-          "operand": {
-            "type": "culpritNeighborOf",
-            "characterId": "thalion",
-            "expected": false
-          }
+          "type": "culpritStatAbove",
+          "stat": "strength",
+          "characterId": "ondine",
+          "expected": true
         }
       },
       {
         "characterId": "ondine",
         "predicate": {
+          "type": "culpritIs",
+          "characterId": "ondine",
+          "expected": false
+        }
+      }
+    ],
+    "rules": [
+      {
+        "type": "truthCount",
+        "count": 4
+      }
+    ]
+  },
+  {
+    "id": "ombres-2",
+    "difficulty": "expert",
+    "characterIds": [
+      "aldric",
+      "elara",
+      "thalion",
+      "sombrelame",
+      "ondine",
+      "gorak",
+      "pip",
+      "varek"
+    ],
+    "statements": [
+      {
+        "characterId": "aldric",
+        "predicate": {
+          "type": "and",
+          "operands": [
+            {
+              "type": "culpritIs",
+              "characterId": "varek",
+              "expected": false
+            },
+            {
+              "type": "culpritStatAtLeast",
+              "stat": "intelligence",
+              "value": 6,
+              "expected": false
+            }
+          ]
+        }
+      },
+      {
+        "characterId": "elara",
+        "predicate": {
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 6,
+          "expected": false
+        }
+      },
+      {
+        "characterId": "thalion",
+        "predicate": {
+          "type": "not",
+          "operand": {
+            "type": "culpritIs",
+            "characterId": "elara",
+            "expected": false
+          }
+        }
+      },
+      {
+        "characterId": "sombrelame",
+        "predicate": {
           "type": "or",
           "operands": [
             {
-              "type": "culpritNeighborOf",
-              "characterId": "mira",
-              "expected": true
+              "type": "culpritStatAtLeast",
+              "stat": "strength",
+              "value": 4,
+              "expected": false
             },
             {
               "type": "characterTruth",
@@ -1126,163 +1235,65 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
         }
       },
       {
-        "characterId": "aldric",
-        "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritAlignment",
-              "alignment": "belliqueux",
-              "expected": true
-            },
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "mira",
-              "expected": false
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "brumm",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "thalion",
-          "expected": false
-        }
-      },
-      {
-        "characterId": "sombrelame",
-        "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "brumm",
-              "expected": false
-            },
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "thalion",
-              "expected": true
-            }
-          ]
-        }
-      }
-    ],
-    "rules": [
-      {
-        "type": "truthCountOneOf",
-        "counts": [
-          4,
-          5
-        ]
-      }
-    ]
-  },
-  {
-    "id": "ombres-2",
-    "difficulty": "expert",
-    "characterIds": [
-      "ondine",
-      "gorak",
-      "aldric",
-      "thalion",
-      "sombrelame",
-      "varek",
-      "elara",
-      "pip"
-    ],
-    "statements": [
-      {
         "characterId": "ondine",
         "predicate": {
-          "type": "culpritIs",
-          "characterId": "ondine",
-          "expected": true
+          "type": "or",
+          "operands": [
+            {
+              "type": "culpritIs",
+              "characterId": "ondine",
+              "expected": true
+            },
+            {
+              "type": "culpritAlignment",
+              "alignment": "pacifiste",
+              "expected": false
+            }
+          ]
         }
       },
       {
         "characterId": "gorak",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "ondine",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "aldric",
-        "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritIs",
-              "characterId": "sombrelame",
-              "expected": false
-            },
-            {
-              "type": "culpritIs",
-              "characterId": "thalion",
-              "expected": true
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "thalion",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "pip",
-          "expected": true
-        }
-      },
-      {
-        "characterId": "sombrelame",
-        "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "thalion",
-              "expected": true
-            },
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "varek",
-              "expected": false
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "varek",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "pip",
-          "expected": false
-        }
-      },
-      {
-        "characterId": "elara",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "sombrelame",
+          "type": "culpritStatAtLeast",
+          "stat": "intelligence",
+          "value": 5,
           "expected": false
         }
       },
       {
         "characterId": "pip",
         "predicate": {
-          "type": "culpritNeighborOf",
+          "type": "culpritStatAbove",
+          "stat": "intelligence",
           "characterId": "aldric",
           "expected": false
+        }
+      },
+      {
+        "characterId": "varek",
+        "predicate": {
+          "type": "and",
+          "operands": [
+            {
+              "type": "culpritStatAbove",
+              "stat": "strength",
+              "characterId": "aldric",
+              "expected": false
+            },
+            {
+              "type": "culpritAlignment",
+              "alignment": "belliqueux",
+              "expected": false
+            }
+          ]
         }
       }
     ],
     "rules": [
       {
-        "type": "liarCount",
-        "count": 2
+        "type": "truthCount",
+        "count": 5
       },
       {
         "type": "culpritCount",
@@ -1297,128 +1308,127 @@ export const FROZEN_PUZZLES: readonly FrozenPuzzle[] = [
     "id": "ombres-3",
     "difficulty": "expert",
     "characterIds": [
+      "mira",
       "thalion",
-      "ondine",
       "elara",
-      "pip",
+      "brumm",
       "gorak",
       "sombrelame",
-      "brumm",
-      "mira"
+      "ondine",
+      "pip"
     ],
     "statements": [
       {
-        "characterId": "thalion",
+        "characterId": "mira",
         "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "elara",
+          "type": "characterTruth",
+          "characterId": "thalion",
           "expected": false
         }
       },
       {
-        "characterId": "ondine",
+        "characterId": "thalion",
         "predicate": {
-          "type": "not",
-          "operand": {
-            "type": "culpritNeighborOf",
-            "characterId": "ondine",
-            "expected": true
-          }
+          "type": "or",
+          "operands": [
+            {
+              "type": "culpritStatAtLeast",
+              "stat": "strength",
+              "value": 7,
+              "expected": true
+            },
+            {
+              "type": "culpritStatAbove",
+              "stat": "intelligence",
+              "characterId": "sombrelame",
+              "expected": true
+            }
+          ]
         }
       },
       {
         "characterId": "elara",
         "predicate": {
-          "type": "and",
-          "operands": [
-            {
-              "type": "characterTruth",
-              "characterId": "sombrelame",
-              "expected": true
-            },
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "sombrelame",
-              "expected": true
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "pip",
-        "predicate": {
-          "type": "or",
-          "operands": [
-            {
-              "type": "culpritNeighborOf",
-              "characterId": "thalion",
-              "expected": true
-            },
-            {
-              "type": "culpritAlignment",
-              "alignment": "belliqueux",
-              "expected": false
-            }
-          ]
-        }
-      },
-      {
-        "characterId": "gorak",
-        "predicate": {
-          "type": "culpritNeighborOf",
-          "characterId": "pip",
-          "expected": false
-        }
-      },
-      {
-        "characterId": "sombrelame",
-        "predicate": {
-          "type": "culpritIs",
-          "characterId": "elara",
-          "expected": false
+          "type": "not",
+          "operand": {
+            "type": "culpritStatAtLeast",
+            "stat": "strength",
+            "value": 4,
+            "expected": true
+          }
         }
       },
       {
         "characterId": "brumm",
         "predicate": {
+          "type": "characterTruth",
+          "characterId": "sombrelame",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "gorak",
+        "predicate": {
           "type": "and",
           "operands": [
             {
-              "type": "culpritIs",
+              "type": "culpritStatAbove",
+              "stat": "intelligence",
               "characterId": "ondine",
-              "expected": false
+              "expected": true
             },
             {
-              "type": "culpritIs",
-              "characterId": "elara",
+              "type": "culpritStatAbove",
+              "stat": "strength",
+              "characterId": "gorak",
               "expected": false
             }
           ]
         }
       },
       {
-        "characterId": "mira",
+        "characterId": "sombrelame",
         "predicate": {
           "type": "or",
           "operands": [
             {
-              "type": "culpritNeighborOf",
-              "characterId": "gorak",
+              "type": "characterTruth",
+              "characterId": "thalion",
               "expected": false
             },
             {
               "type": "characterTruth",
               "characterId": "ondine",
-              "expected": false
+              "expected": true
             }
           ]
+        }
+      },
+      {
+        "characterId": "ondine",
+        "predicate": {
+          "type": "culpritIs",
+          "characterId": "pip",
+          "expected": false
+        }
+      },
+      {
+        "characterId": "pip",
+        "predicate": {
+          "type": "culpritStatAbove",
+          "stat": "strength",
+          "characterId": "ondine",
+          "expected": true
         }
       }
     ],
     "rules": [
       {
-        "type": "truthCount",
-        "count": 7
+        "type": "liarCountOneOf",
+        "counts": [
+          5,
+          6
+        ]
       }
     ]
   }

@@ -172,12 +172,12 @@ interface PortraitProps {
   alignment: CharacterAlignment;
   /** Character name, used for the accessible label of PNG portraits. */
   name?: string;
-  /** PNG portrait URL. If missing or failing to load, the SVG illustration is used. */
+  /** Portrait URL. If missing or failing to load, the SVG illustration is used. */
   src?: string;
   className?: string;
 }
 
-/** PNG portrait with a graceful fallback to the species SVG. Same 200x220 box either way. */
+/** Square illustration (cover) with a graceful fallback to the species SVG. */
 export function Portrait({ species, alignment, name, src, className }: PortraitProps) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [src]);
@@ -191,7 +191,7 @@ export function Portrait({ species, alignment, name, src, className }: PortraitP
       decoding="async"
       draggable={false}
       onError={() => setFailed(true)}
-      className={`${className ?? ""} aspect-[200/220] object-contain object-bottom select-none`}
+      className={`${className ?? ""} aspect-square object-cover select-none`}
     />
   );
 }

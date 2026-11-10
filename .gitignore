@@ -3,3 +3,9 @@ node_modules
 dist
 graphify-out
 agents.md
+
+# Build cache
+tsconfig.tsbuildinfo
+
+# Old portrait versions (local only); sources live in art/portraits/
+art/portraits/old/

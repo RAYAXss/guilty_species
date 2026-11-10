@@ -97,7 +97,7 @@ Varek says:
 "Gorak is lying."
 
 Neris says:
-"Un de mes voisins est coupable."
+"Le coupable est plus fort que moi."
 ```
 
 The player must determine which combination of truth/lie assignments satisfies every rule.
@@ -110,25 +110,51 @@ Only one culprit should remain.
 
 Every character lives in one of six regions of Fantolia: Forêt mystique, Montagnes glacées, Désert aride, Marais des brumes, Plaines dorées and Terres d'ombre.
 
-Two characters are **neighbors** when their regions share a border (never the same region). Clues such as *"Un de mes voisins est coupable"* or *"Aucun voisin de Gorak n'est coupable"* rely on this. The **Carte** button (or the Tab key) opens the map: pick a creature to highlight its region and the bordering ones. Neighbor clues, the map and its button only appear from *normal* (`neighborClues` in `DIFFICULTY_PARAMS`).
+The map is **lore only**: no clue depends on regions. It frames the campaign, and the **Carte** button during a campaign level shows where each suspect comes from.
 
 Borders are domain data (`src/domain/world/fantolia.ts`); the drawing lives in `src/ui/tokens/fantolia.ts`.
+
+## 💪 Stats: Force and Intelligence
+
+Every character has two stats from 1 to 10, printed on the card (`strength`, `intelligence` in `src/domain/characters/catalog.ts`). From *normal* (`statClues` in `DIFFICULTY_PARAMS`), statements can use them:
+
+- thresholds: *« Le coupable a 6 ou plus en force »*, *« Le coupable a moins de 6 en intelligence »*;
+- comparisons: *« Le coupable est plus fort que Gorak »* (strictly), *« … plus intelligent que moi »*.
+
+The generator only emits stat clues that split the current cast (someone on each side), so none is vacuous.
 
 ## 📜 Rules and clues
 
 - Characters never name a species. When they talk about the culprit's temperament they use plain words (« d'un naturel paisible », « d'un tempérament guerrier », « animé par la vengeance »); the words *pacifiste / belliqueux / vengeur* stay on the cards and in the rules.
 - Count rules: exact (`Exactement 2 personnages disent la vérité`, `Exactement 1 personnage ment`) or ranges from *difficile* (`1 ou 2 personnages disent la vérité`).
 - Culprit count, from *expert*: `Il y a 2 coupables` or `Il y a 1 ou 2 coupables`. Without this rule there is exactly one culprit. With several culprits, "culprit" predicates mean "at least one culprit" (and `expected: false` means none).
-- Levels add creatures, not clues: still one statement per character and one count rule. *Difficile* and *expert* also reject puzzles whose wrong hypotheses are all obviously off (`analyzePuzzle().nearMisses`, tuned in `DIFFICULTY_PARAMS`); uniqueness is never relaxed.
+- Levels add characters, not clues: still one statement per character and one count rule. *Difficile* and *expert* also reject puzzles whose wrong hypotheses are all obviously off (`analyzePuzzle().nearMisses`, tuned in `DIFFICULTY_PARAMS`); uniqueness is never relaxed.
 
 ## 🧭 Game modes
 
 - **Jeu libre**: a new generated puzzle every round; winning moves to the next difficulty.
+- **Tutoriel**: three hand-written lessons (`src/domain/tutorial/tutorial.ts`) with a step-by-step coach that highlights the cards it talks about. Tests check each lesson is unique and that its steps conclude the solver's culprit. Winning moves to the next lesson; losing replays it.
 - **Campagne — Le Cœur de Fantolia**: 18 fixed levels in 6 chapters, one per region, travelling along the borders (Forêt → Marais → Plaines → Montagnes → Désert → Terres d'ombre). Each chapter has a lore intro and each level a short case. A level opens once the previous one is won; stars come from attempts left (first try = 3, second = 2). Progress is saved in `localStorage` (`fantolia.campaign.v1`).
 
-Campaign puzzles are **frozen data** (`src/domain/campaign/frozen-puzzles.ts`): characters, predicates and rules only. The text is re-rendered from the predicates and the answer comes from the solver, so generator changes never alter a level. Tests check that every level has exactly one solution, uses no neighbor clue below *normal*, and only names characters present in it.
+Campaign puzzles are **frozen data** (`src/domain/campaign/frozen-puzzles.ts`): characters, predicates and rules only. The text is re-rendered from the predicates and the answer comes from the solver, so generator changes never alter a level. Tests check that every level has exactly one solution, uses no stat clue below *normal*, and only names characters present in it.
 
-To add or re-bake a level: run `generatePuzzle({ difficulty, seed, characterCount })` once from a throwaway script, paste `characterIds`, `statements` (`characterId` + `predicate`) and `rules` into `frozen-puzzles.ts`, then add its entry to `LEVELS` in `campaign.ts`.
+To re-bake levels (keeping each level's cast and difficulty): `npx tsx scripts/bake-campaign.ts [levelId...] > src/domain/campaign/frozen-puzzles.ts` (no id = every level). To add a level, add it to `FROZEN_PUZZLES` and `LEVELS`, then bake it.
+
+## 🔊 Audio
+
+Music and sound effects are optional files in `public/audio/` (names in `src/infrastructure/audio/audio.ts`). A missing file stays silent. Volumes (général, musique, effets) are set from the gear button and saved in `localStorage` (`guilty-species.settings.v1`). Sound goes through Web Audio gain nodes so the sliders also work on iOS.
+
+## 🎴 3D background
+
+Floating character cards rendered with three.js (`src/ui/scene/cardsScene.ts`), loaded in a separate chunk.
+
+Portraits are square illustrations with their own background (864×864 PNG sources in `art/portraits/<id>.png`, outside `public/` so they are never shipped): cards use 480px WebP (`public/portraits/card/`) and the 3D background uses 256px WebP (`public/portraits/thumbs/`). After adding or changing a portrait, regenerate both (needs Python + Pillow):
+
+```bash
+python -c "from PIL import Image; import glob, os; [(lambda im, n: (im.resize((480, 480), Image.LANCZOS).save(f'public/portraits/card/{n}.webp', 'WEBP', quality=82), im.resize((256, 256), Image.LANCZOS).save(f'public/portraits/thumbs/{n}.webp', 'WEBP', quality=82)))(Image.open(f).convert('RGB'), os.path.basename(f)[:-4]) for f in glob.glob('art/portraits/*.png')]"
+```
+
+With reduced motion or without WebGL, static cards are shown instead.
 
 ## 🧩 Puzzle Engine
 

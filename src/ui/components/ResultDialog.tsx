@@ -13,15 +13,19 @@ interface Props {
   characters: Character[];
   difficulty: Difficulty;
   nextDifficulty: Difficulty;
+  mode: "free" | "campaign" | "tutorial";
   /** Campaign rounds: stars earned on a win (free play passes nothing). */
   campaignStars?: number;
+  /** Tutorial: a win leads to another lesson. */
+  hasNextLesson?: boolean;
   /** Last campaign level: a win ends the story. */
   finale?: boolean;
   onContinue: () => void;
 }
 
-export function ResultDialog({ feedback, characters, difficulty, nextDifficulty, campaignStars, finale, onContinue }: Props) {
-  const campaign = campaignStars !== undefined;
+export function ResultDialog({ feedback, characters, difficulty, nextDifficulty, mode, campaignStars, hasNextLesson, finale, onContinue }: Props) {
+  const campaign = mode === "campaign";
+  const tutorial = mode === "tutorial";
   const find = (id: string) => characters.find((c) => c.id === id);
   const culprits = feedback.kind === "retry" ? [] : feedback.culpritIds.map(find).filter((c): c is Character => !!c);
   const accused = feedback.kind === "retry" ? feedback.accusedIds.map(find).filter((c): c is Character => !!c) : [];
@@ -36,7 +40,7 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
 
   const copy = {
     retry: {
-      title: feedback.kind === "retry" && feedback.correctCount > 0 ? "Une contradiction subsiste." : accused.length > 1 ? "Ces créatures sont innocentes." : "Cette créature est innocente.",
+      title: feedback.kind === "retry" && feedback.correctCount > 0 ? "Une contradiction subsiste." : accused.length > 1 ? "Ces personnages sont innocents." : "Ce personnage est innocent.",
       body: retryBody,
       cta: "Reprendre l'enquête",
       Icon: Search,
@@ -44,19 +48,23 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
     },
     won: {
       title: culprits.length > 1 ? "Coupables démasqués !" : "Coupable démasqué !",
-      body: !campaign
+      body: tutorial
+        ? hasNextLesson
+          ? `C'était bien ${culpritNames}. Passons à la leçon suivante.`
+          : `C'était bien ${culpritNames}. Tu es prêt à enquêter seul !`
+        : !campaign
         ? `C'était bien ${culpritNames}. Niveau suivant : ${nextDifficulty}.`
         : finale
           ? `C'était bien ${culpritNames}. Le Cœur est retrouvé : la paix revient sur Fantolia.`
           : `C'était bien ${culpritNames}. La piste continue…`,
-      cta: campaign ? "Retour à la carte" : "Retour au menu",
+      cta: tutorial && hasNextLesson ? "Leçon suivante" : campaign ? "Retour à la carte" : "Retour au menu",
       Icon: ArrowRight,
       accent: "bg-pacifiste-soft",
     },
     lost: {
       title: "Manche perdue",
-      body: `${culprits.length > 1 ? "Les coupables étaient" : "Le coupable était"} ${culpritNames}. ${campaign ? "Tu peux retenter cette enquête." : `Tu retentes au niveau ${difficulty}.`}`,
-      cta: campaign ? "Retour à la carte" : "Retour au menu",
+      body: `${culprits.length > 1 ? "Les coupables étaient" : "Le coupable était"} ${culpritNames}. ${tutorial ? "Relis les étapes, puis réessaie." : campaign ? "Tu peux retenter cette enquête." : `Tu retentes au niveau ${difficulty}.`}`,
+      cta: tutorial ? "Réessayer la leçon" : campaign ? "Retour à la carte" : "Retour au menu",
       Icon: RotateCcw,
       accent: "bg-belliqueux-soft",
     },
@@ -98,7 +106,7 @@ export function ResultDialog({ feedback, characters, difficulty, nextDifficulty,
         <h2 id="result-title" className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
           {copy.title}
         </h2>
-        {feedback.kind === "won" && campaign && (
+        {feedback.kind === "won" && campaign && campaignStars !== undefined && (
           <p className="mt-2 flex justify-center gap-1" aria-label={`${campaignStars} étoiles sur 3`}>
             {[0, 1, 2].map((i) => (
               <motion.span

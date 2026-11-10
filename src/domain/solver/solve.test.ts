@@ -6,9 +6,9 @@ import { evaluatePredicate } from "../statements/predicate";
 import { possibleCulprits, solve } from "./solve";
 
 const chars: Character[] = [
-  { id: "a", name: "A", species: "elfe", alignment: "pacifiste", region: "foret", weight: 1 },
-  { id: "b", name: "B", species: "orc", alignment: "belliqueux", region: "desert", weight: 1 },
-  { id: "c", name: "C", species: "dragon", alignment: "vengeur", region: "ombres", weight: 1 },
+  { id: "a", name: "A", species: "elfe", alignment: "pacifiste", region: "foret", strength: 2, intelligence: 5, weight: 1 },
+  { id: "b", name: "B", species: "orc", alignment: "belliqueux", region: "desert", strength: 8, intelligence: 3, weight: 1 },
+  { id: "c", name: "C", species: "dragon", alignment: "vengeur", region: "ombres", strength: 5, intelligence: 9, weight: 1 },
 ];
 
 const stmt = (characterId: string, predicate: Statement["predicate"]): Statement => ({
@@ -84,11 +84,11 @@ describe("solve", () => {
     expect(solutions).toHaveLength(1);
   });
 
-  it("handles a neighbor clue (a in forêt only borders b in montagnes)", () => {
-    // A: "un de mes voisins est coupable" (b is a's only neighbor); B: "a est coupable"; C: "a ment".
+  it("handles a stat comparison (a is the weakest)", () => {
+    // A: "le coupable est plus fort que moi"; B: "a est coupable"; C: "a ment".
     const puzzle = make(
       [
-        stmt("a", { type: "culpritNeighborOf", characterId: "a", expected: true }),
+        stmt("a", { type: "culpritStatAbove", stat: "strength", characterId: "a", expected: true }),
         stmt("b", { type: "culpritIs", characterId: "a", expected: true }),
         stmt("c", { type: "characterTruth", characterId: "a", expected: false }),
       ],

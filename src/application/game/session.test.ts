@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TUTORIAL_LESSONS } from "../../domain/tutorial/tutorial";
 import { gameReducer, initialState, MAX_ATTEMPTS, nextDifficulty, type GameState } from "./session";
 
 const started = (over: Partial<GameState> = {}): GameState =>
@@ -152,6 +153,37 @@ describe("game session", () => {
       expect(s.lastResult).toBe("lost");
       expect(s.progress).toEqual({});
       expect(gameReducer(level("foret-1"), { type: "quit" }).screen).toBe("campaign");
+    });
+  });
+
+  describe("tutorial", () => {
+    const [first, second] = TUTORIAL_LESSONS as [(typeof TUTORIAL_LESSONS)[number], (typeof TUTORIAL_LESSONS)[number]];
+    const lesson = (id: string) => gameReducer(initialState, { type: "startTutorial", lessonId: id });
+
+    it("chains to the next lesson on a win without touching free play", () => {
+      const won = accuse(lesson(first.id), ...first.culpritIds);
+      const next = gameReducer(won, { type: "dismissFeedback" });
+      expect(next.mode).toBe("tutorial");
+      expect(next.lessonId).toBe(second.id);
+      expect(next.difficulty).toBe(initialState.difficulty);
+    });
+
+    it("replays the same lesson after a loss, and ends on the menu after the last lesson", () => {
+      let s = lesson(first.id);
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        s = accuse(s, innocents(s).find((id) => !s.round!.innocentIds.includes(id))!);
+        if (s.feedback?.kind === "retry") s = gameReducer(s, { type: "dismissFeedback" });
+      }
+      expect(s.feedback?.kind).toBe("lost");
+      expect(gameReducer(s, { type: "dismissFeedback" }).lessonId).toBe(first.id);
+
+      const last = TUTORIAL_LESSONS[TUTORIAL_LESSONS.length - 1]!;
+      const end = gameReducer(accuse(lesson(last.id), ...last.culpritIds), { type: "dismissFeedback" });
+      expect(end.screen).toBe("menu");
+    });
+
+    it("ignores unknown lessons", () => {
+      expect(gameReducer(initialState, { type: "startTutorial", lessonId: "nope" })).toBe(initialState);
     });
   });
 });

@@ -2,6 +2,7 @@ import { Crosshair, MessageCircleQuestion, Scale, ScrollText, UserSearch, Users 
 import { motion } from "motion/react";
 import { renderRule, type Rule } from "../../domain/rules/rule";
 import { motionTokens } from "../tokens/motion";
+import { AlignmentLegend } from "./AlignmentBadge";
 
 const icons = {
   truthCount: Scale,
@@ -39,6 +40,9 @@ export function RulesBoard({ rules }: { rules: Rule[] }) {
           );
         })}
       </ul>
+      <div className="mt-2 sm:mt-3">
+        <AlignmentLegend />
+      </div>
     </section>
   );
 }

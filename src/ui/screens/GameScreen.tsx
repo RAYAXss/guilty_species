@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, Gavel, Heart, Map as MapIcon, MousePointerClick } from "lucide-react";
 import { MAX_ATTEMPTS, nextDifficulty, type GameState } from "../../application/game/session";
@@ -6,8 +6,10 @@ import { CharacterCard, type CardState } from "../components/CharacterCard";
 import { MapDialog } from "../components/MapDialog";
 import { ResultDialog } from "../components/ResultDialog";
 import { RulesBoard } from "../components/RulesBoard";
+import { TutorialCoach } from "../components/TutorialCoach";
+import { findLesson, nextLessonId } from "../../domain/tutorial/tutorial";
+import { audio } from "../../infrastructure/audio/audio";
 import { culpritCountsOf } from "../../domain/rules/rule";
-import { DIFFICULTY_PARAMS } from "../../domain/generator/difficulty";
 import { LEVELS, nextLevelId, starsFor } from "../../domain/campaign/campaign";
 import { motionTokens } from "../tokens/motion";
 
@@ -23,22 +25,13 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
   // Read from the puzzle, not the free-play setting: campaign levels carry their own difficulty.
   const difficulty = round?.puzzle.difficulty ?? state.difficulty;
   const level = state.mode === "campaign" ? LEVELS.find((l) => l.id === state.levelId) : undefined;
+  const lesson = state.mode === "tutorial" && state.lessonId ? findLesson(state.lessonId) : undefined;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const hasMap = DIFFICULTY_PARAMS[difficulty].neighborClues;
-  const [mapOpen, setMapOpen] = useState(hasMap);
-
-  useEffect(() => {
-    if (!hasMap) return;
-    const onKey = (e: KeyboardEvent) => {
-      // Inside a dialog (the map itself, quit, result), Tab keeps its normal focus behavior.
-      if (e.key === "Tab" && !(e.target as Element | null)?.closest?.('[role="dialog"],[role="alertdialog"]')) {
-        e.preventDefault();
-        setMapOpen((v) => !v);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [hasMap]);
+  const [step, setStep] = useState(0);
+  // The map is lore: only the campaign shows it.
+  const hasMap = state.mode === "campaign";
+  const [mapOpen, setMapOpen] = useState(false);
+  const focusIds = lesson?.steps[step]?.focusIds ?? [];
 
   if (!round) return null;
 
@@ -50,11 +43,14 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
   const stateOf = (id: string): CardState => (innocentIds.includes(id) ? "innocent" : selectedIds.includes(id) ? "selected" : "idle");
 
   // Toggle; when the limit is reached the oldest pick makes room for the new one.
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
+    audio.playSfx("select");
     setSelectedIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id].slice(-maxSuspects)));
+  };
 
   const accuse = () => {
     if (!canAccuse) return;
+    audio.playSfx("accuse");
     onAccuse(selected.map((c) => c.id));
     setSelectedIds([]);
   };
@@ -68,13 +64,13 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
 
   return (
     <motion.main
-      className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-3 px-3 pb-6 pt-3 sm:gap-5 sm:px-4 sm:pb-8 sm:pt-5"
+      className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-3 px-3 pb-6 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-5 sm:px-4 sm:pb-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: motionTokens.duration.normal }}
     >
-      <header className="flex items-center justify-between gap-2 sm:gap-3">
+      <header className="flex items-center justify-between gap-2 pr-14 sm:gap-3">
         <button
           onClick={onQuit}
           aria-label="Quitter la manche"
@@ -84,7 +80,8 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
           <span className="hidden sm:inline">Quitter la manche</span>
         </button>
         <h1 className="min-w-0 truncate text-center font-display text-base font-extrabold sm:text-2xl">
-          {level ? level.title : `Niveau ${difficulty}`} <span className="text-dim">· {puzzle.characters.length} créatures</span>
+          {lesson ? "Tutoriel" : level ? level.title : `Niveau ${difficulty}`}{" "}
+          <span className="text-dim">· {puzzle.characters.length} personnages</span>
         </h1>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {hasMap && (
@@ -116,6 +113,8 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
 
       <RulesBoard rules={puzzle.rules} />
 
+      {lesson && <TutorialCoach lesson={lesson} step={step} onStep={setStep} />}
+
       <section aria-label="Suspects" className="flex-1 pb-2 sm:pb-4">
         <ul className="grid grid-cols-2 gap-x-3 gap-y-5 pt-5 sm:justify-center sm:gap-x-5 sm:gap-y-8 sm:pt-10 sm:[grid-template-columns:repeat(auto-fit,minmax(9.5rem,14rem))]">
           {puzzle.characters.map((c, i) => (
@@ -125,6 +124,7 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
               character={c}
               statement={puzzle.statements.filter((s) => s.characterId === c.id).map((s) => s.text).join(" ")}
               state={stateOf(c.id)}
+              highlight={focusIds.includes(c.id)}
               onSelect={toggle}
             />
           ))}
@@ -154,7 +154,9 @@ export function GameScreen({ state, onAccuse, onDismissFeedback, onQuit }: Props
           characters={puzzle.characters}
           difficulty={difficulty}
           nextDifficulty={nextDifficulty(difficulty)}
+          mode={state.mode}
           campaignStars={level ? starsFor(attemptsLeft) : undefined}
+          hasNextLesson={lesson ? nextLessonId(lesson.id) !== null : false}
           finale={level ? nextLevelId(level.id) === null : false}
           onContinue={onDismissFeedback}
         />
