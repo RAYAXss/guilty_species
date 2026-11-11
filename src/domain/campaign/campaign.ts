@@ -4,7 +4,7 @@ import type { Puzzle } from "../puzzle/types";
 import { culpritCountsOf } from "../rules/rule";
 import { renderStatement } from "../statements/render";
 import { FROZEN_PUZZLES } from "./frozen-puzzles";
-import type { CampaignProgress, Chapter, Level } from "./types";
+import type { CampaignProgress, Chapter, FrozenPuzzle, Level } from "./types";
 
 /** The journey follows the borders of Fantolia, from the forest to the Terres d'ombre. */
 export const CHAPTERS: readonly Chapter[] = [
@@ -41,7 +41,7 @@ export const CHAPTERS: readonly Chapter[] = [
 ];
 
 export const LEVELS: readonly Level[] = [
-  { id: "foret-1", region: "foret", title: "L'autel vide", story: "Trois créatures veillaient près de l'autel. L'une d'elles a emporté le Cœur." },
+  { id: "foret-1", region: "foret", title: "L'autel vide", story: "Trois personnages veillaient près de l'autel. L'une d'elles a emporté le Cœur." },
   { id: "foret-2", region: "foret", title: "Traces dans la mousse", story: "Des empreintes mènent à un campement. Quatre voyageurs y dorment… ou font semblant." },
   { id: "foret-3", region: "foret", title: "Le gardien endormi", story: "Quelqu'un a versé une potion dans la tisane du gardien. Qui tenait la louche ?" },
   { id: "marais-1", region: "marais", title: "Le passeur", story: "Le passeur a fait traverser un voleur cette nuit. Il refuse de dire lequel." },
@@ -65,14 +65,19 @@ export const LEVELS: readonly Level[] = [
 export function levelPuzzle(levelId: string, catalog: readonly Character[] = CHARACTER_CATALOG): Puzzle {
   const frozen = FROZEN_PUZZLES.find((p) => p.id === levelId);
   if (!frozen) throw new Error(`Unknown level: ${levelId}`);
-  const characters = frozen.characterIds.map((id) => {
-    const c = catalog.find((x) => x.id === id);
-    if (!c) throw new Error(`Unknown character in level ${levelId}: ${id}`);
+  return thawPuzzle(frozen, `campaign-${levelId}`, catalog);
+}
+
+/** Turns a logic-only puzzle into a playable one, rendering every text from its predicate. */
+export function thawPuzzle(frozen: FrozenPuzzle, id: string, catalog: readonly Character[] = CHARACTER_CATALOG): Puzzle {
+  const characters = frozen.characterIds.map((cid) => {
+    const c = catalog.find((x) => x.id === cid);
+    if (!c) throw new Error(`Unknown character in ${frozen.id}: ${cid}`);
     return c;
   });
   const multiCulprit = culpritCountsOf(frozen.rules).some((n) => n > 1);
   return {
-    id: `campaign-${levelId}`,
+    id,
     seed: 0,
     difficulty: frozen.difficulty,
     characters,

@@ -1,6 +1,6 @@
 # DESIGN.md
 
-# Fantasy Deduction Game — Design System
+# Guilty Species — Design System
 
 ## 1. Design direction
 

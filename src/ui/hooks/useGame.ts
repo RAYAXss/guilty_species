@@ -22,6 +22,7 @@ export function useGame() {
     openCampaign: useCallback(() => dispatch({ type: "openCampaign" }), []),
     openMenu: useCallback(() => dispatch({ type: "openMenu" }), []),
     startLevel: useCallback((levelId: string) => dispatch({ type: "startLevel", levelId }), []),
+    startTutorial: useCallback((lessonId: string) => dispatch({ type: "startTutorial", lessonId }), []),
     accuse: useCallback((characterIds: string[]) => dispatch({ type: "accuse", characterIds }), []),
     dismissFeedback: useCallback(() => dispatch({ type: "dismissFeedback" }), []),
     quit: useCallback(() => dispatch({ type: "quit" }), []),

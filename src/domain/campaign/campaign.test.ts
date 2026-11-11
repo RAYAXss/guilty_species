@@ -18,10 +18,10 @@ describe("campaign levels", () => {
     expect(FROZEN_PUZZLES.map((p) => p.id).sort()).toEqual([...ids].sort());
   });
 
-  it("never uses neighbor clues where the difficulty does not allow them", () => {
+  it("never uses stat clues where the difficulty does not allow them", () => {
     for (const p of FROZEN_PUZZLES) {
-      if (DIFFICULTY_PARAMS[p.difficulty].neighborClues) continue;
-      expect(JSON.stringify(p.statements)).not.toContain("culpritNeighborOf");
+      if (DIFFICULTY_PARAMS[p.difficulty].statClues) continue;
+      expect(JSON.stringify(p.statements)).not.toContain("culpritStat");
     }
   });
 
@@ -33,7 +33,12 @@ describe("campaign levels", () => {
     }
   });
 
-  it("only names characters who are actually in the level", () => {
+  it("keeps the two-thieves level multi-culprit, and only that one", () => {
+    const multi = LEVELS.filter((l) => culpritCountsOf(levelPuzzle(l.id).rules).some((n) => n > 1)).map((l) => l.id);
+    expect(multi).toEqual(["ombres-2"]);
+  });
+
+    it("only names characters who are actually in the level", () => {
     for (const level of LEVELS) {
       const cast = levelPuzzle(level.id).characters.map((c) => c.id);
       for (const c of CHARACTER_CATALOG) {

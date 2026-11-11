@@ -5,7 +5,6 @@ import { evaluatePredicate } from "../statements/predicate";
 import { evaluateRule, renderRule } from "../rules/rule";
 import { solve } from "../solver/solve";
 import { analyzePuzzle, DIFFICULTY_PARAMS } from "./difficulty";
-import { neighborsOf } from "../world/fantolia";
 import { generatePuzzle, PuzzleGenerationError } from "./generate";
 import type { Difficulty } from "../puzzle/types";
 
@@ -81,6 +80,28 @@ describe("generatePuzzle", () => {
         expect(suspects).toBeGreaterThanOrEqual(params.minRulesOnlySuspects);
       }
     }
+  });
+
+  it("uses stat clues that split the cast, and none in facile", () => {
+    const atoms = (p: import("../statements/predicate").LogicalPredicate): import("../statements/predicate").LogicalPredicate[] =>
+      p.type === "and" || p.type === "or" ? p.operands.flatMap(atoms) : p.type === "not" ? atoms(p.operand) : [p];
+    let seen = 0;
+    for (const difficulty of difficulties) {
+      for (let seed = 1; seed <= 15; seed++) {
+        const { puzzle } = generatePuzzle({ difficulty, seed });
+        for (const p of puzzle.statements.flatMap((s) => atoms(s.predicate))) {
+          if (p.type !== "culpritStatAtLeast" && p.type !== "culpritStatAbove") continue;
+          expect(DIFFICULTY_PARAMS[difficulty].statClues).toBe(true);
+          seen++;
+          const values = puzzle.characters.map((c) => c[p.stat]);
+          const ref = p.type === "culpritStatAtLeast" ? p.value : puzzle.characters.find((c) => c.id === p.characterId)![p.stat] + 1;
+          // Some characters on each side of the line: the clue is never vacuous.
+          expect(values.some((v) => v >= ref)).toBe(true);
+          expect(values.some((v) => v < ref)).toBe(true);
+        }
+      }
+    }
+    expect(seen).toBeGreaterThan(0);
   });
 
   it("throws when no unique puzzle can be generated", () => {

@@ -5,6 +5,7 @@ import { generatePuzzle } from "../../domain/generator/generate";
 import { culpritCountsOf } from "../../domain/rules/rule";
 import { solve } from "../../domain/solver/solve";
 import type { Difficulty, Puzzle } from "../../domain/puzzle/types";
+import { findLesson, lessonPuzzle, nextLessonId } from "../../domain/tutorial/tutorial";
 
 export const DIFFICULTY_ORDER: readonly Difficulty[] = ["facile", "normal", "difficile", "expert"];
 export const MAX_ATTEMPTS = 2;
@@ -31,13 +32,15 @@ export type Feedback =
 
 export interface GameState {
   screen: "menu" | "campaign" | "playing";
-  /** Free play draws a new puzzle each round; campaign plays frozen levels. */
-  mode: "free" | "campaign";
+  /** Free play draws a new puzzle each round; campaign and tutorial play frozen puzzles. */
+  mode: "free" | "campaign" | "tutorial";
   /** Free-play settings: the campaign never changes them. */
   difficulty: Difficulty;
   characterCount: number;
   /** Campaign level being played (or last played). */
   levelId: string | null;
+  /** Tutorial lesson being played. */
+  lessonId: string | null;
   progress: CampaignProgress;
   round: Round | null;
   feedback: Feedback | null;
@@ -52,6 +55,7 @@ export type GameAction =
   | { type: "openCampaign" }
   | { type: "openMenu" }
   | { type: "startLevel"; levelId: string }
+  | { type: "startTutorial"; lessonId: string }
   | { type: "accuse"; characterIds: string[] }
   | { type: "dismissFeedback" }
   | { type: "quit" };
@@ -62,6 +66,7 @@ export const initialState: GameState = {
   difficulty: "facile",
   characterCount: 4,
   levelId: null,
+  lessonId: null,
   progress: {},
   round: null,
   feedback: null,
@@ -99,12 +104,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "startLevel": {
       if (!isUnlocked(state.progress, action.levelId)) return state;
-      const puzzle = levelPuzzle(action.levelId);
-      // Frozen levels are checked by tests; the solver still provides the answer, so there is no second source of truth.
-      const [solution] = solve(puzzle);
-      if (!solution) return state;
-      const round: Round = { puzzle, culpritIds: solution.culpritIds, attemptsLeft: MAX_ATTEMPTS, innocentIds: [] };
+      const round = frozenRound(levelPuzzle(action.levelId));
+      if (!round) return state;
       return { ...state, screen: "playing", mode: "campaign", levelId: action.levelId, round, feedback: null, lastResult: null };
+    }
+
+    case "startTutorial": {
+      if (!findLesson(action.lessonId)) return state;
+      const round = frozenRound(lessonPuzzle(action.lessonId));
+      if (!round) return state;
+      return { ...state, screen: "playing", mode: "tutorial", lessonId: action.lessonId, round, feedback: null, lastResult: null };
     }
 
     case "accuse": {
@@ -136,6 +145,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { feedback } = state;
       if (!feedback) return state;
       if (feedback.kind === "retry") return { ...state, feedback: null };
+      if (state.mode === "tutorial" && state.lessonId) {
+        // Win => next lesson (or menu after the last one); loss => replay the same lesson.
+        const next = feedback.kind === "won" ? nextLessonId(state.lessonId) : state.lessonId;
+        if (next) return gameReducer({ ...state, feedback: null }, { type: "startTutorial", lessonId: next });
+        return { ...state, screen: "menu", round: null, feedback: null, lastResult: null, lessonId: null };
+      }
       if (state.mode === "campaign") {
         const { round, levelId } = state;
         const progress =
@@ -158,4 +173,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "quit":
       return { ...state, screen: state.mode === "campaign" ? "campaign" : "menu", round: null, feedback: null };
   }
+}
+
+/** Frozen puzzles are checked by tests; the solver still provides the answer, so there is no second source of truth. */
+function frozenRound(puzzle: Puzzle): Round | null {
+  const [solution] = solve(puzzle);
+  return solution ? { puzzle, culpritIds: solution.culpritIds, attemptsLeft: MAX_ATTEMPTS, innocentIds: [] } : null;
 }

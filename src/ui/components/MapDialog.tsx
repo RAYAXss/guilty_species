@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { MapPin, X } from "lucide-react";
 import type { Character } from "../../domain/characters/types";
-import { REGION_IDS, REGION_NAMES, adjacentRegions, neighborsOf, type RegionId } from "../../domain/world/fantolia";
+import { REGION_IDS, REGION_NAMES } from "../../domain/world/fantolia";
 import { motionTokens } from "../tokens/motion";
 import { MAP_VIEWBOX, regionStyle } from "../tokens/fantolia";
 import { portraitSrc } from "../tokens/portrait";
@@ -17,8 +17,6 @@ export function MapDialog({ characters, onClose }: Props) {
   const [focusId, setFocusId] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const focus = characters.find((c) => c.id === focusId);
-  const neighborRegions: RegionId[] = focus ? adjacentRegions(focus.region) : [];
-  const neighbors = focus ? neighborsOf(characters, focus.id) : [];
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -59,7 +57,7 @@ export function MapDialog({ characters, onClose }: Props) {
           </button>
         </div>
         <p className="mt-1 text-sm font-semibold text-muted sm:text-base">
-          Un voisin vit dans une région qui touche celle de la créature. Touche une créature pour voir ses voisins.
+          Les six régions de Fantolia. Touche un personnage pour voir d'où il vient.
         </p>
 
         <svg
@@ -68,28 +66,18 @@ export function MapDialog({ characters, onClose }: Props) {
           role="group"
           aria-label="Carte des six régions de Fantolia"
         >
-          <defs>
-            <pattern id="neighbor-hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <rect width="12" height="12" fill="none" />
-              <line x1="0" y1="0" x2="0" y2="12" stroke="#8f2d3c" strokeWidth="5" strokeOpacity="0.45" />
-            </pattern>
-          </defs>
-
           {REGION_IDS.map((id) => {
             const style = regionStyle[id];
             const own = focus?.region === id;
-            const next = neighborRegions.includes(id);
             return (
               <g key={id}>
                 <polygon
                   points={style.points}
                   fill={style.fill}
-                  stroke={own ? "#d1a03a" : next ? "#8f2d3c" : "#1f1830"}
-                  strokeWidth={own || next ? 5 : 2}
-                  strokeDasharray={next ? "10 6" : undefined}
+                  stroke={own ? "#d1a03a" : "#1f1830"}
+                  strokeWidth={own ? 5 : 2}
                   strokeLinejoin="round"
                 />
-                {next && <polygon points={style.points} fill="url(#neighbor-hatch)" pointerEvents="none" />}
                 <text
                   x={style.label[0]}
                   y={style.label[1]}
@@ -99,9 +87,9 @@ export function MapDialog({ characters, onClose }: Props) {
                 >
                   {REGION_NAMES[id]}
                 </text>
-                {(own || next) && (
+                {own && (
                   <text x={style.label[0]} y={style.label[1] + 20} textAnchor="middle" className="fill-[#1f1830] text-[15px] font-bold" pointerEvents="none">
-                    {own ? "★ Sa région" : "↔ Voisine"}
+                    ★ Sa région
                   </text>
                 )}
               </g>
@@ -139,12 +127,12 @@ export function MapDialog({ characters, onClose }: Props) {
                   </clipPath>
                   <image
                     href={portraitSrc(c)}
-                    x={cx - 24}
-                    y={cy - 26}
-                    width={48}
-                    height={48}
+                    x={cx - 21}
+                    y={cy - 21}
+                    width={42}
+                    height={42}
                     clipPath={`url(#clip-${c.id})`}
-                    preserveAspectRatio="xMidYMin slice"
+                    preserveAspectRatio="xMidYMid slice"
                     pointerEvents="none"
                   />
                   <text x={cx} y={cy + 42} textAnchor="middle" className="fill-[#1f1830] text-[14px] font-bold" pointerEvents="none">
@@ -159,11 +147,7 @@ export function MapDialog({ characters, onClose }: Props) {
         <p className="mt-3 flex items-start gap-2 text-sm font-bold sm:text-base" aria-live="polite">
           <MapPin className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
           <span>
-            {!focus
-              ? "Aucune créature choisie."
-              : neighbors.length > 0
-                ? `Voisins de ${focus.name} : ${neighbors.map((n) => `${n.name} (${REGION_NAMES[n.region]})`).join(", ")}.`
-                : `${focus.name} n'a aucun voisin parmi les suspects.`}
+            {focus ? `${focus.name} vient de la région ${REGION_NAMES[focus.region]}.` : "Aucun personnage choisi."}
           </span>
         </p>
       </motion.div>

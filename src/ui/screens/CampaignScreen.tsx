@@ -14,8 +14,8 @@ interface Props {
   onBack: () => void;
 }
 
-const FOG = "#2a2340";
-const FOG_INK = "#7a70a0";
+const FOG = "#33271b";
+const FOG_INK = "#a08a68";
 /** Markers sit on the map's inner side of each name (below on the top row, above on the bottom row), so the trail never crosses a label. */
 const markerOf = (region: RegionId): [number, number] => {
   const [x, y] = regionStyle[region].label;
@@ -34,13 +34,13 @@ export function CampaignScreen({ state, onStartLevel, onBack }: Props) {
 
   return (
     <motion.main
-      className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-4 px-3 pb-8 pt-3 sm:gap-6 sm:px-4 sm:pt-5"
+      className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-4 px-3 pb-8 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-6 sm:px-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: motionTokens.duration.normal }}
     >
-      <header className="flex items-center justify-between gap-2">
+      <header className="flex items-center justify-between gap-2 pr-14">
         <button
           onClick={onBack}
           aria-label="Retour au menu"
@@ -58,7 +58,7 @@ export function CampaignScreen({ state, onStartLevel, onBack }: Props) {
 
       <svg
         viewBox={`0 0 ${MAP_VIEWBOX.width} ${MAP_VIEWBOX.height}`}
-        className="mx-auto block h-auto w-full max-w-[min(100%,72dvh)] rounded-card border-2 border-sun bg-[#1b1630]"
+        className="mx-auto block h-auto w-full max-w-[min(100%,72dvh)] rounded-card border-2 border-sun bg-[#1e150d]"
         role="group"
         aria-label="Carte du voyage à travers Fantolia"
       >
@@ -121,12 +121,12 @@ export function CampaignScreen({ state, onStartLevel, onBack }: Props) {
                 x={lx}
                 y={ly + 4}
                 textAnchor="middle"
-                className={`font-display text-[18px] font-bold ${open ? "fill-[#1f1830]" : "fill-[#7a70a0]"}`}
+                className={`font-display text-[18px] font-bold ${open ? "fill-[#1f1830]" : "fill-[#a08a68]"}`}
               >
                 {open ? REGION_NAMES[c.region] : "Terre inconnue"}
               </text>
               <circle cx={mx} cy={my} r={20} fill={open ? "#8f2d3c" : FOG} stroke={open ? "#f2e6c9" : FOG_INK} strokeWidth={3} />
-              <text x={mx} y={my + 8} textAnchor="middle" className={`font-display text-[22px] font-bold ${open ? "fill-[#f2e6c9]" : "fill-[#7a70a0]"}`}>
+              <text x={mx} y={my + 8} textAnchor="middle" className={`font-display text-[22px] font-bold ${open ? "fill-[#f2e6c9]" : "fill-[#a08a68]"}`}>
                 {i + 1}
               </text>
             </g>

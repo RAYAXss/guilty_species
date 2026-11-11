@@ -24,18 +24,18 @@ export interface DifficultyParams {
   culpritCountChoices: readonly (readonly number[])[];
   /** Which count-rule kinds this difficulty may draw from. */
   countRules: readonly CountRuleKind[];
-  /** Whether "culpritNeighborOf" predicates can appear in statements. */
-  neighborClues: boolean;
+  /** Whether strength / intelligence clues can appear in statements. */
+  statClues: boolean;
 }
 
 const EXACT: readonly CountRuleKind[] = ["truthCount", "liarCount"];
 const ANY: readonly CountRuleKind[] = ["truthCount", "liarCount", "truthCountOneOf", "liarCountOneOf"];
 
 export const DIFFICULTY_PARAMS: Record<Difficulty, DifficultyParams> = {
-  facile: { characterCount: 4, minCharacters: 3, maxCharacters: 4, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0, minRulesOnlySuspects: 2, maxRedundantClues: Infinity, culpritCountChoices: [[1]], countRules: EXACT, neighborClues: false },
-  normal: { characterCount: 5, minCharacters: 4, maxCharacters: 5, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0, minRulesOnlySuspects: 2, maxRedundantClues: Infinity, culpritCountChoices: [[1]], countRules: EXACT, neighborClues: true },
-  difficile: { characterCount: 6, minCharacters: 5, maxCharacters: 6, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.3, minRulesOnlySuspects: 2, maxRedundantClues: 2, culpritCountChoices: [[1]], countRules: ANY, neighborClues: true },
-  expert: { characterCount: 8, minCharacters: 6, maxCharacters: 9, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.5, minRulesOnlySuspects: 2, maxRedundantClues: 4, culpritCountChoices: [[1], [1, 2]], countRules: ANY, neighborClues: true },
+  facile: { characterCount: 4, minCharacters: 3, maxCharacters: 4, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0, minRulesOnlySuspects: 2, maxRedundantClues: Infinity, culpritCountChoices: [[1]], countRules: EXACT, statClues: false },
+  normal: { characterCount: 5, minCharacters: 4, maxCharacters: 5, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0, minRulesOnlySuspects: 2, maxRedundantClues: Infinity, culpritCountChoices: [[1]], countRules: EXACT, statClues: true },
+  difficile: { characterCount: 6, minCharacters: 5, maxCharacters: 6, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.3, minRulesOnlySuspects: 2, maxRedundantClues: 2, culpritCountChoices: [[1]], countRules: ANY, statClues: true },
+  expert: { characterCount: 8, minCharacters: 6, maxCharacters: 9, statementsPerCharacter: 1, extraRules: 0, compositeChance: 0.5, minRulesOnlySuspects: 2, maxRedundantClues: 4, culpritCountChoices: [[1], [1, 2]], countRules: ANY, statClues: true },
 };
 
 export function characterRange(difficulty: Difficulty): { min: number; max: number } {

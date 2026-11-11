@@ -1,6 +1,5 @@
-import type { Character, CharacterAlignment } from "../characters/types";
+import type { Character, CharacterAlignment, Stat } from "../characters/types";
 import type { Solution } from "../puzzle/types";
-import { neighborsOf } from "../world/fantolia";
 
 /**
  * Logical meaning of a statement. Composable.
@@ -11,7 +10,10 @@ export type LogicalPredicate =
   | { type: "culpritIs"; characterId: string; expected: boolean }
   | { type: "culpritAlignment"; alignment: CharacterAlignment; expected: boolean }
   | { type: "culpritSpecies"; species: string; expected: boolean }
-  | { type: "culpritNeighborOf"; characterId: string; expected: boolean }
+  /** "Le coupable a 6 ou plus en force" (expected: false = "moins de 6"). */
+  | { type: "culpritStatAtLeast"; stat: Stat; value: number; expected: boolean }
+  /** "Le coupable est plus fort que Gorak" (strictly greater). */
+  | { type: "culpritStatAbove"; stat: Stat; characterId: string; expected: boolean }
   | { type: "not"; operand: LogicalPredicate }
   | { type: "and"; operands: LogicalPredicate[] }
   | { type: "or"; operands: LogicalPredicate[] };
@@ -37,8 +39,12 @@ export function evaluatePredicate(
       return world.culpritIds.some((id) => findCharacter(characters, id).alignment === predicate.alignment) === predicate.expected;
     case "culpritSpecies":
       return world.culpritIds.some((id) => findCharacter(characters, id).species === predicate.species) === predicate.expected;
-    case "culpritNeighborOf":
-      return neighborsOf(characters, predicate.characterId).some((n) => world.culpritIds.includes(n.id)) === predicate.expected;
+    case "culpritStatAtLeast":
+      return world.culpritIds.some((id) => findCharacter(characters, id)[predicate.stat] >= predicate.value) === predicate.expected;
+    case "culpritStatAbove": {
+      const ref = findCharacter(characters, predicate.characterId)[predicate.stat];
+      return world.culpritIds.some((id) => findCharacter(characters, id)[predicate.stat] > ref) === predicate.expected;
+    }
     case "not":
       return !evaluatePredicate(predicate.operand, characters, world);
     case "and":

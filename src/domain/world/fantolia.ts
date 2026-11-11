@@ -1,6 +1,4 @@
-import type { Character } from "../characters/types";
-
-/** Regions of Fantolia. Domain data: adjacency drives the "voisin" clues. */
+/** Regions of Fantolia. Lore only: the campaign travels along their borders. */
 export const REGION_IDS = ["foret", "montagnes", "desert", "marais", "plaines", "ombres"] as const;
 export type RegionId = (typeof REGION_IDS)[number];
 
@@ -30,11 +28,4 @@ export function adjacentRegions(region: RegionId): RegionId[] {
 
 export function areNeighbors(a: RegionId, b: RegionId): boolean {
   return adjacentRegions(a).includes(b);
-}
-
-/** Neighbors = characters living in a bordering region (never the same region). */
-export function neighborsOf(characters: readonly Character[], characterId: string): Character[] {
-  const me = characters.find((c) => c.id === characterId);
-  if (!me) throw new Error(`Unknown character: ${characterId}`);
-  return characters.filter((c) => c.id !== me.id && areNeighbors(me.region, c.region));
 }

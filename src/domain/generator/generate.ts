@@ -1,9 +1,8 @@
-import { ALIGNMENTS, type Character } from "../characters/types";
+import { ALIGNMENTS, STATS, type Character } from "../characters/types";
 import { CHARACTER_CATALOG } from "../characters/catalog";
 import type { Difficulty, Puzzle, Solution, Statement } from "../puzzle/types";
 import { evaluatePredicate, type LogicalPredicate } from "../statements/predicate";
 import { renderStatement } from "../statements/render";
-import { neighborsOf } from "../world/fantolia";
 import { evaluateRule, type Rule } from "../rules/rule";
 import { solve } from "../solver/solve";
 import { createRng, pickOne, randomInt, shuffle, type Rng } from "../../infrastructure/random/rng";
@@ -128,10 +127,32 @@ function buildRules(
   return rules;
 }
 
+/** Stat clues that split the cast: some characters on each side, so none is vacuous. */
+function statCandidates(characters: Character[]): LogicalPredicate[] {
+  return STATS.flatMap((stat) => {
+    const values = characters.map((c) => c[stat]);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    // "v ou plus" splits the cast when min < v <= max.
+    const thresholds = [...new Set(values)].filter((v) => v > min);
+    return [
+      ...thresholds.flatMap<LogicalPredicate>((value) => [
+        { type: "culpritStatAtLeast", stat, value, expected: true },
+        { type: "culpritStatAtLeast", stat, value, expected: false },
+      ]),
+      // "Plus fort que X" needs someone strictly above X.
+      ...characters
+        .filter((c) => c[stat] < max)
+        .flatMap<LogicalPredicate>((c) => [
+          { type: "culpritStatAbove", stat, characterId: c.id, expected: true },
+          { type: "culpritStatAbove", stat, characterId: c.id, expected: false },
+        ]),
+    ];
+  });
+}
+
 function atomicCandidates(characters: Character[], speakerId: string): LogicalPredicate[] {
   const others = characters.filter((c) => c.id !== speakerId);
-  // "Voisin" clues only make sense for someone who has at least one neighbor in this puzzle.
-  const withNeighbors = characters.filter((c) => neighborsOf(characters, c.id).length > 0);
   return [
     ...others.flatMap<LogicalPredicate>((c) => [
       { type: "characterTruth", characterId: c.id, expected: true },
@@ -145,18 +166,6 @@ function atomicCandidates(characters: Character[], speakerId: string): LogicalPr
       { type: "culpritAlignment", alignment, expected: true },
       { type: "culpritAlignment", alignment, expected: false },
     ]),
-    ...withNeighbors.flatMap<LogicalPredicate>((c) => [
-      { type: "culpritNeighborOf", characterId: c.id, expected: true },
-      { type: "culpritNeighborOf", characterId: c.id, expected: false },
-    ]),
-    ...characters.flatMap<LogicalPredicate>((c) =>
-      neighborsOf(characters, c.id).length > 0
-        ? [
-            { type: "culpritNeighborOf", characterId: c.id, expected: true },
-            { type: "culpritNeighborOf", characterId: c.id, expected: false },
-          ]
-        : [],
-    ),
   ];
 }
 
@@ -164,8 +173,7 @@ function buildStatements(rng: Rng, params: DifficultyParams, characters: Charact
   const statements: Statement[] = [];
   for (const speaker of characters) {
     const tellsTruth = world.assignments[speaker.id] === true;
-    let atoms = atomicCandidates(characters, speaker.id);
-    if (!params.neighborClues) atoms = atoms.filter((p) => p.type !== "culpritNeighborOf");
+    const atoms = [...atomicCandidates(characters, speaker.id), ...(params.statClues ? statCandidates(characters) : [])];
     for (let i = 0; i < params.statementsPerCharacter; i++) {
       // Truthful speakers: every statement true. Liars: the first one must be false.
       const mustBe: boolean | null = tellsTruth ? true : i === 0 ? false : null;
@@ -244,8 +252,10 @@ function subjectOf(p: LogicalPredicate): string {
       return `alignment:${p.alignment}`;
     case "culpritSpecies":
       return `species:${p.species}`;
-    case "culpritNeighborOf":
-      return `neighbor:${p.characterId}`;
+    // Two clues on the same stat would make near-tautological composites.
+    case "culpritStatAtLeast":
+    case "culpritStatAbove":
+      return `stat:${p.stat}`;
     default:
       return p.type;
   }

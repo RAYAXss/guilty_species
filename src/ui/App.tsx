@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig } from "motion/react";
+import { Settings } from "lucide-react";
 import type { GameState } from "../application/game/session";
+import { TUTORIAL_LESSONS } from "../domain/tutorial/tutorial";
+import { audio } from "../infrastructure/audio/audio";
+import { loadVolumes, saveVolumes } from "../infrastructure/persistence/settingsStorage";
+import { CardsBackground } from "./components/CardsBackground";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { useGame } from "./hooks/useGame";
 import { CampaignScreen } from "./screens/CampaignScreen";
 import { GameScreen } from "./screens/GameScreen";
@@ -8,6 +14,7 @@ import { MenuScreen } from "./screens/MenuScreen";
 
 function roundPath(state: GameState, puzzle: { difficulty: string; seed: number }): string {
   if (state.mode === "campaign") return `/campagne/${state.levelId}`;
+  if (state.mode === "tutorial") return `/tutoriel/${state.lessonId}`;
   return `/round=${puzzle.difficulty}_${puzzle.seed.toString(36)}`;
 }
 
@@ -48,7 +55,7 @@ function ConfirmQuitDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-2xl border-[3px] border-ink bg-danger px-4 py-2.5 font-bold text-white shadow-[0_4px_0_#1d1a4a] active:translate-y-1 active:shadow-[0_1px_0_#1d1a4a]"
+            className="flex-1 rounded-2xl border-[3px] border-ink bg-danger px-4 py-2.5 font-bold text-white shadow-[0_4px_0_#07050d] active:translate-y-1 active:shadow-[0_1px_0_#07050d]"
           >
             Quitter
           </button>
@@ -65,6 +72,31 @@ export function App() {
   stateRef.current = state;
 
   const [confirmBack, setConfirmBack] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [volumes, setVolumes] = useState(loadVolumes);
+
+  useEffect(() => {
+    audio.setVolumes(volumes);
+    saveVolumes(volumes);
+  }, [volumes]);
+
+  // Browsers allow sound only after a user gesture.
+  useEffect(() => {
+    const unlock = () => audio.unlock();
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  useEffect(() => audio.playMusic(state.screen === "playing" ? "game" : "menu"), [state.screen]);
+
+  const feedbackKind = state.feedback?.kind;
+  useEffect(() => {
+    if (feedbackKind) audio.playSfx(feedbackKind === "won" ? "win" : feedbackKind === "lost" ? "lose" : "wrong");
+  }, [feedbackKind, state.round?.attemptsLeft]);
 
   // Sync URL with game state: going deeper pushes (so "back" can be intercepted), returning to the menu replaces.
   useEffect(() => {
@@ -108,6 +140,19 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
+      <CardsBackground dim={state.screen === "playing"} />
+
+      <button
+        onClick={() => {
+          audio.playSfx("click");
+          setSettingsOpen(true);
+        }}
+        aria-label="Réglages"
+        className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-40 inline-flex size-11 items-center justify-center rounded-lg border-2 border-sun/50 bg-surface text-ink hover:border-sun sm:right-4"
+      >
+        <Settings size={20} aria-hidden />
+      </button>
+
       <AnimatePresence mode="wait">
         {state.screen === "menu" ? (
           <MenuScreen
@@ -117,6 +162,7 @@ export function App() {
             onSetDifficulty={game.setDifficulty}
             onStart={game.start}
             onOpenCampaign={game.openCampaign}
+            onStartTutorial={() => game.startTutorial(TUTORIAL_LESSONS[0]!.id)}
           />
         ) : state.screen === "campaign" ? (
           <CampaignScreen key="campaign" state={state} onStartLevel={game.startLevel} onBack={game.openMenu} />
@@ -130,6 +176,8 @@ export function App() {
           />
         )}
       </AnimatePresence>
+
+      {settingsOpen && <SettingsDialog volumes={volumes} onChange={setVolumes} onClose={() => setSettingsOpen(false)} />}
 
       {confirmBack && (
         <ConfirmQuitDialog onCancel={() => setConfirmBack(false)} onConfirm={handleConfirmQuit} />

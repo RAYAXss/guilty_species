@@ -17,28 +17,40 @@ describe("statement rendering", () => {
     expect(renderStatement({ type: "culpritAlignment", alignment: "vengeur", expected: false }, chars, ctx)).toBe("Aucun coupable n'est animé par la vengeance.");
   });
 
-  it("speaks in the first person about one's own neighbors", () => {
-    const p = { type: "culpritNeighborOf", characterId: "elara", expected: true } as const;
-    expect(renderStatement(p, chars, { speakerId: "elara" })).toBe("Un de mes voisins est coupable.");
-    expect(renderStatement(p, chars, { speakerId: "gorak" })).toBe("Un voisin d'Elara est coupable.");
+  it("renders stat thresholds, with « Aucun » for the plural negation", () => {
+    const p = { type: "culpritStatAtLeast", stat: "strength", value: 6, expected: true } as const;
+    expect(renderStatement(p, chars)).toBe("Le coupable a 6 ou plus en force.");
+    expect(renderStatement({ ...p, expected: false }, chars)).toBe("Le coupable a moins de 6 en force.");
+    expect(renderStatement(p, chars, { multiCulprit: true })).toBe("Au moins un coupable a 6 ou plus en force.");
+    expect(renderStatement({ ...p, expected: false }, chars, { multiCulprit: true })).toBe("Aucun coupable n'a 6 ou plus en force.");
   });
 
-  it("negates neighbor clues with « Aucun », never « Un … n'est pas »", () => {
-    const p = { type: "culpritNeighborOf", characterId: "elara", expected: false } as const;
-    for (const multiCulprit of [false, true]) {
-      expect(renderStatement(p, chars, { speakerId: "elara", multiCulprit })).toBe("Aucun de mes voisins n'est coupable.");
-      expect(renderStatement(p, chars, { speakerId: "gorak", multiCulprit })).toBe("Aucun voisin d'Elara n'est coupable.");
-    }
-    expect(renderStatement({ ...p, expected: true }, chars, { speakerId: "elara", multiCulprit: true })).toBe("Au moins un de mes voisins est coupable.");
+  it("renders stat comparisons, in the first person about oneself", () => {
+    const p = { type: "culpritStatAbove", stat: "intelligence", characterId: "gorak", expected: true } as const;
+    expect(renderStatement(p, chars, { speakerId: "elara" })).toBe("Le coupable est plus intelligent que Gorak.");
+    expect(renderStatement(p, chars, { speakerId: "gorak" })).toBe("Le coupable est plus intelligent que moi.");
+    expect(renderStatement({ ...p, stat: "strength", expected: false }, chars)).toBe("Le coupable n'est pas plus fort que Gorak.");
+    expect(renderStatement({ ...p, characterId: "elara" }, chars)).toBe("Le coupable est plus intelligent qu'Elara.");
+    expect(renderStatement({ ...p, expected: false }, chars, { multiCulprit: true })).toBe("Aucun coupable n'est plus intelligent que Gorak.");
   });
 
   it("keeps composite clues readable", () => {
     const text = renderStatement(
-      { type: "or", operands: [{ type: "culpritNeighborOf", characterId: "gorak", expected: true }, { type: "characterTruth", characterId: "mira", expected: false }] },
+      { type: "or", operands: [{ type: "culpritStatAbove", stat: "strength", characterId: "gorak", expected: true }, { type: "characterTruth", characterId: "mira", expected: false }] },
       chars,
       { speakerId: "elara" },
     );
-    expect(text).toBe("Un voisin de Gorak est coupable, ou Mira ment.");
+    expect(text).toBe("Le coupable est plus fort que Gorak, ou Mira ment.");
+  });
+
+  it("speaks in the first person when the speaker accuses or clears themselves", () => {
+    const self = { type: "culpritIs", characterId: "gorak", expected: true } as const;
+    expect(renderStatement(self, chars, { speakerId: "gorak" })).toBe("Je suis coupable.");
+    expect(renderStatement({ ...self, expected: false }, chars, { speakerId: "gorak", multiCulprit: true })).toBe("Je ne suis pas coupable.");
+    expect(renderStatement(self, chars, { speakerId: "elara" })).toBe("Le coupable est Gorak.");
+    expect(
+      renderStatement({ type: "or", operands: [{ type: "characterTruth", characterId: "mira", expected: false }, self] }, chars, { speakerId: "gorak" }),
+    ).toBe("Mira ment, ou je suis coupable.");
   });
 
   it("renders the new rules", () => {
